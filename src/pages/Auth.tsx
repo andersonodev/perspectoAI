@@ -8,12 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Brain, BookOpen, Users, Zap } from 'lucide-react';
+import { Brain, BookOpen, Users, Zap, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -30,6 +32,7 @@ const Auth = () => {
     const { error } = await signIn(email, password);
     
     if (error) {
+      console.error('Login error:', error);
       toast({
         title: "Erro ao fazer login",
         description: error.message,
@@ -53,12 +56,14 @@ const Auth = () => {
     const { error } = await signUp(email, password);
     
     if (error) {
+      console.error('Signup error:', error);
       toast({
         title: "Erro ao criar conta",
         description: error.message,
         variant: "destructive"
       });
     } else {
+      setShowEmailConfirmation(true);
       toast({
         title: "Conta criada!",
         description: "Verifique seu email para ativar a conta."
@@ -137,6 +142,15 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {showEmailConfirmation && (
+                  <Alert className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Conta criada com sucesso! Verifique seu email para confirmar sua conta antes de fazer login.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Tabs defaultValue="signin" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="signin">Entrar</TabsTrigger>
