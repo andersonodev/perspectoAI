@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AIAssistant, CreateAssistantRequest } from '@/types/database';
@@ -23,7 +24,10 @@ export const useAssistants = () => {
       // Type assertion para garantir que os dados estão no formato correto
       const typedData = (data || []).map(assistant => ({
         ...assistant,
-        personality: assistant.personality as AIAssistant['personality']
+        personality: assistant.personality as AIAssistant['personality'],
+        guardrails: (assistant.guardrails as Record<string, any>) || {},
+        is_published: assistant.is_published || false,
+        welcome_message: assistant.welcome_message || null
       }));
       
       setAssistants(typedData);
