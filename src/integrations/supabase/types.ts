@@ -9,7 +9,124 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ai_assistants: {
+        Row: {
+          created_at: string
+          guardrails: Json | null
+          id: string
+          is_published: boolean | null
+          name: string
+          personality: string
+          subject: string
+          updated_at: string
+          user_id: string
+          welcome_message: string | null
+        }
+        Insert: {
+          created_at?: string
+          guardrails?: Json | null
+          id?: string
+          is_published?: boolean | null
+          name: string
+          personality?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+          welcome_message?: string | null
+        }
+        Update: {
+          created_at?: string
+          guardrails?: Json | null
+          id?: string
+          is_published?: boolean | null
+          name?: string
+          personality?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      assistant_knowledge: {
+        Row: {
+          assistant_id: string
+          content: string
+          content_type: string
+          created_at: string
+          id: string
+          source_info: Json | null
+          title: string
+        }
+        Insert: {
+          assistant_id: string
+          content: string
+          content_type: string
+          created_at?: string
+          id?: string
+          source_info?: Json | null
+          title: string
+        }
+        Update: {
+          assistant_id?: string
+          content?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          source_info?: Json | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_knowledge_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_conversations: {
+        Row: {
+          assistant_id: string
+          created_at: string
+          feedback: number | null
+          id: string
+          message: string
+          response: string
+          sources: Json | null
+          student_session_id: string
+        }
+        Insert: {
+          assistant_id: string
+          created_at?: string
+          feedback?: number | null
+          id?: string
+          message: string
+          response: string
+          sources?: Json | null
+          student_session_id: string
+        }
+        Update: {
+          assistant_id?: string
+          created_at?: string
+          feedback?: number | null
+          id?: string
+          message?: string
+          response?: string
+          sources?: Json | null
+          student_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_conversations_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
