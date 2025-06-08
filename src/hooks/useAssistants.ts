@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AIAssistant, CreateAssistantRequest } from '@/types/database';
@@ -20,7 +19,14 @@ export const useAssistants = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAssistants(data || []);
+      
+      // Type assertion para garantir que os dados estão no formato correto
+      const typedData = (data || []).map(assistant => ({
+        ...assistant,
+        personality: assistant.personality as AIAssistant['personality']
+      }));
+      
+      setAssistants(typedData);
     } catch (error) {
       console.error('Error fetching assistants:', error);
       toast({
