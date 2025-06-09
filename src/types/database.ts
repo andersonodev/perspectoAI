@@ -22,6 +22,17 @@ export interface AssistantKnowledge {
   created_at: string;
 }
 
+// Database response types (what we get from Supabase)
+export interface AssistantKnowledgeFromDB {
+  id: string;
+  assistant_id: string;
+  content_type: string; // This comes as a generic string from the database
+  title: string;
+  content: string;
+  source_info: Record<string, any> | null;
+  created_at: string;
+}
+
 export interface StudentConversation {
   id: string;
   assistant_id: string;

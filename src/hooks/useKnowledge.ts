@@ -1,8 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AssistantKnowledge, AddKnowledgeRequest } from '@/types/database';
+import { AssistantKnowledge, AssistantKnowledgeFromDB, AddKnowledgeRequest } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+
+// Helper function to convert database response to our interface
+const convertKnowledgeFromDB = (dbKnowledge: AssistantKnowledgeFromDB): AssistantKnowledge => ({
+  ...dbKnowledge,
+  content_type: dbKnowledge.content_type as 'file' | 'text' | 'url',
+  source_info: dbKnowledge.source_info || {}
+});
 
 export const useKnowledge = (assistantId: string) => {
   const [knowledge, setKnowledge] = useState<AssistantKnowledge[]>([]);
@@ -20,7 +27,8 @@ export const useKnowledge = (assistantId: string) => {
 
       if (error) throw error;
       
-      setKnowledge(data || []);
+      const convertedData = (data || []).map(convertKnowledgeFromDB);
+      setKnowledge(convertedData);
     } catch (error) {
       console.error('Error fetching knowledge:', error);
       toast({
@@ -52,7 +60,7 @@ export const useKnowledge = (assistantId: string) => {
       });
 
       await fetchKnowledge();
-      return data;
+      return convertKnowledgeFromDB(data);
     } catch (error) {
       console.error('Error adding knowledge:', error);
       toast({
