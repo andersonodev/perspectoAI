@@ -29,7 +29,7 @@ export interface AssistantKnowledgeFromDB {
   content_type: string; // This comes as a generic string from the database
   title: string;
   content: string;
-  source_info: Record<string, any> | null;
+  source_info: any; // Changed from Record<string, any> | null to any to match Supabase Json type
   created_at: string;
 }
 
