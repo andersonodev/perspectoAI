@@ -1,121 +1,76 @@
-
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAssistants } from '@/hooks/useAssistants';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Plus, Settings, Users, BarChart3, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAssistants } from '@/hooks/useAssistants';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Brain, Plus, Settings, Trash2, User, Calendar, Link as LinkIcon, Copy } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
-  const { assistants, loading } = useAssistants();
+  const { assistants, loading, deleteAssistant } = useAssistants();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+  const handleDeleteAssistant = async (id: string) => {
+    setDeletingId(id);
+    await deleteAssistant(id);
+    setDeletingId(null);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+  const copyShareLink = (assistantId: string) => {
+    const link = `${window.location.origin}/chat/${assistantId}`;
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Link copiado!",
+      description: "O link foi copiado para a área de transferência."
+    });
   };
 
-  const getPersonalityLabel = (personality: string) => {
-    const labels = {
-      friendly: 'Amigável',
-      formal: 'Formal',
-      socratic: 'Socrático',
-      creative: 'Criativo'
-    };
-    return labels[personality as keyof typeof labels] || personality;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <Brain className="h-8 w-8 text-blue-600" />
-              <h1 className="text-xl font-semibold text-gray-900">Mentor IA</h1>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Brain className="h-6 w-6 text-blue-600 mr-2" />
+              <h1 className="text-xl font-semibold text-gray-900">
+                Meus Assistentes
+              </h1>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Olá, {user?.email}</span>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
+            <div className="flex items-center">
+              <span className="mr-4 text-gray-600 text-sm">
+                Olá, {user?.email}
+              </span>
+              <Button onClick={() => navigate('/create-assistant')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Novo
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Assistentes</CardTitle>
-              <Brain className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
+        {assistants.length === 0 ? (
+          <Card className="text-center py-12">
             <CardContent>
-              <div className="text-2xl font-bold">{assistants.length}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Assistentes Publicados</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {assistants.filter(a => a.is_published).length}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Em Desenvolvimento</CardTitle>
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {assistants.filter(a => !a.is_published).length}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Header Actions */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Meus Assistentes</h2>
-          <Button onClick={() => navigate('/create-assistant')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Criar Novo Assistente
-          </Button>
-        </div>
-
-        {/* Assistants Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando assistentes...</p>
-          </div>
-        ) : assistants.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
               <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Nenhum assistente criado ainda
               </h3>
               <p className="text-gray-600 mb-6">
-                Comece criando seu primeiro assistente de IA personalizado
+                Crie seu primeiro assistente de IA para começar a ajudar seus alunos.
               </p>
               <Button onClick={() => navigate('/create-assistant')}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -128,61 +83,81 @@ const Dashboard = () => {
             {assistants.map((assistant) => (
               <Card key={assistant.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{assistant.name}</CardTitle>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      assistant.is_published 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {assistant.is_published ? 'Publicado' : 'Rascunho'}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{assistant.name}</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">{assistant.subject}</p>
                     </div>
+                    <Badge variant={assistant.is_published ? "default" : "secondary"}>
+                      {assistant.is_published ? "Publicado" : "Rascunho"}
+                    </Badge>
                   </div>
-                  <CardDescription>{assistant.subject}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Personalidade:</span>
-                      <span className="font-medium">{getPersonalityLabel(assistant.personality)}</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <User className="h-4 w-4" />
+                      <span>
+                        {assistant.personality === 'friendly' && 'Amigável'}
+                        {assistant.personality === 'formal' && 'Formal'}
+                        {assistant.personality === 'socratic' && 'Socrático'}
+                        {assistant.personality === 'creative' && 'Criativo'}
+                      </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Criado em:</span>
-                      <span className="font-medium">{formatDate(assistant.created_at)}</span>
+                    
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        Criado em {new Date(assistant.created_at).toLocaleDateString()}
+                      </span>
                     </div>
-                  </div>
-                  
-                  <div className="flex space-x-2 mt-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => navigate(`/assistant/${assistant.id}/edit`)}
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
+
                     {assistant.is_published && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => navigate(`/assistant/${assistant.id}/analytics`)}
-                      >
-                        <BarChart3 className="h-4 w-4 mr-1" />
-                        Analytics
-                      </Button>
+                      <div className="p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-green-700 text-sm">
+                            <LinkIcon className="h-4 w-4 mr-1" />
+                            Link para alunos
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyShareLink(assistant.id)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">
+                          Clique no ícone para copiar o link
+                        </p>
+                      </div>
                     )}
-                  </div>
-                  
-                  {assistant.is_published && (
-                    <div className="mt-3 p-2 bg-blue-50 rounded">
-                      <p className="text-xs text-blue-700 mb-1">Link para compartilhar:</p>
-                      <code className="text-xs text-blue-800 break-all">
-                        {window.location.origin}/chat/{assistant.id}
-                      </code>
+
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/assistant/${assistant.id}/edit`)}
+                        className="flex-1"
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAssistant(assistant.id)}
+                        disabled={deletingId === assistant.id}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        {deletingId === assistant.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

@@ -2,22 +2,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAssistants } from '@/hooks/useAssistants';
+import { useKnowledge } from '@/hooks/useKnowledge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Brain } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Brain, Link as LinkIcon } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import KnowledgeUpload from '@/components/KnowledgeUpload';
+
+interface KnowledgeItem {
+  id: string;
+  type: 'file' | 'text';
+  title: string;
+  content: string;
+  file?: File;
+}
 
 const CreateAssistant = () => {
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
   const [personality, setPersonality] = useState<'friendly' | 'formal' | 'socratic' | 'creative'>('friendly');
   const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [createdAssistant, setCreatedAssistant] = useState<any>(null);
   
   const { createAssistant } = useAssistants();
+  const { uploadPDF, addKnowledge } = useKnowledge(createdAssistant?.id || '');
   const navigate = useNavigate();
 
   const personalityOptions = [
@@ -31,23 +46,67 @@ const CreateAssistant = () => {
     e.preventDefault();
     setLoading(true);
 
-    const assistant = await createAssistant({
-      name,
-      subject,
-      personality,
-      welcome_message: welcomeMessage || `Olá! Eu sou o ${name}, seu assistente de ${subject}. Como posso te ajudar hoje?`,
-      guardrails: {
-        focus_only_provided_content: true,
-        no_direct_answers_to_exercises: true,
-        stay_in_subject: true
-      }
-    });
+    try {
+      // First create the assistant
+      const assistant = await createAssistant({
+        name,
+        subject,
+        personality,
+        welcome_message: welcomeMessage || `Olá! Eu sou o ${name}, seu assistente de ${subject}. Como posso te ajudar hoje?`,
+        guardrails: {
+          focus_only_provided_content: true,
+          no_direct_answers_to_exercises: true,
+          stay_in_subject: true
+        }
+      });
 
-    if (assistant) {
+      if (!assistant) {
+        throw new Error('Falha ao criar assistente');
+      }
+
+      setCreatedAssistant(assistant);
+
+      // Then upload knowledge if any
+      if (knowledge.length > 0) {
+        toast({
+          title: "Carregando material...",
+          description: "Processando arquivos e textos adicionados."
+        });
+
+        for (const item of knowledge) {
+          if (item.type === 'file' && item.file) {
+            await uploadPDF(item.file);
+          } else if (item.type === 'text') {
+            await addKnowledge({
+              content_type: 'text',
+              title: item.title,
+              content: item.content
+            });
+          }
+        }
+      }
+
+      toast({
+        title: "Sucesso!",
+        description: "Assistente criado com sucesso!"
+      });
+
       navigate(`/assistant/${assistant.id}/edit`);
+    } catch (error) {
+      console.error('Error creating assistant:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o assistente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
+  };
+
+  const generateShareableLink = () => {
+    if (!createdAssistant) return '';
+    return `${window.location.origin}/chat/${createdAssistant.id}`;
   };
 
   return (
@@ -72,135 +131,184 @@ const CreateAssistant = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Básicas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Assistente</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ex: Professor Bio, Assistente de História..."
-                    required
-                  />
-                  <p className="text-sm text-gray-600">
-                    Este será o nome que os alunos verão
-                  </p>
-                </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Tabs defaultValue="basic" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+            <TabsTrigger value="knowledge">Material de Ensino</TabsTrigger>
+            <TabsTrigger value="preview">Pré-visualização</TabsTrigger>
+          </TabsList>
 
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Matéria/Disciplina</Label>
-                  <Input
-                    id="subject"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="Ex: Biologia Celular, História do Brasil..."
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="personality">Personalidade</Label>
-                  <Select value={personality} onValueChange={(value: any) => setPersonality(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {personalityOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div>
-                            <div className="font-medium">{option.label}</div>
-                            <div className="text-sm text-gray-600">{option.description}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="welcome">Mensagem de Boas-vindas (Opcional)</Label>
-                  <Textarea
-                    id="welcome"
-                    value={welcomeMessage}
-                    onChange={(e) => setWelcomeMessage(e.target.value)}
-                    placeholder="Personalize a primeira mensagem que os alunos verão..."
-                    rows={3}
-                  />
-                  <p className="text-sm text-gray-600">
-                    Se deixar em branco, será gerada automaticamente
-                  </p>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Criando..." : "Criar Assistente"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pré-visualização</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-blue-50">
-                  <h3 className="font-semibold text-blue-900">
-                    {name || "Nome do Assistente"}
-                  </h3>
-                  <p className="text-blue-700 text-sm">
-                    Assistente de {subject || "Sua Matéria"}
-                  </p>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <div className="text-sm font-medium text-gray-700 mb-2">
-                    Mensagem de boas-vindas:
+          <TabsContent value="basic">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações do Assistente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome do Assistente</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Ex: Professor Bio, Assistente de História..."
+                      required
+                    />
                   </div>
-                  <p className="text-gray-900">
-                    {welcomeMessage || 
-                     (name && subject ? 
-                      `Olá! Eu sou o ${name}, seu assistente de ${subject}. Como posso te ajudar hoje?` :
-                      "Sua mensagem de boas-vindas aparecerá aqui..."
-                     )
-                    }
-                  </p>
-                </div>
 
-                <div className="p-4 border rounded-lg bg-gray-50">
-                  <div className="text-sm font-medium text-gray-700 mb-2">
-                    Personalidade selecionada:
+                  <div className="space-y-2">
+                    <Label htmlFor="subject">Matéria/Disciplina</Label>
+                    <Input
+                      id="subject"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder="Ex: Biologia Celular, História do Brasil..."
+                      required
+                    />
                   </div>
-                  <p className="text-gray-900">
-                    {personalityOptions.find(p => p.value === personality)?.label}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {personalityOptions.find(p => p.value === personality)?.description}
-                  </p>
-                </div>
 
-                <div className="text-sm text-gray-600">
-                  <p><strong>Próximos passos:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 mt-2">
-                    <li>Adicionar material de ensino (PDFs, slides, textos)</li>
-                    <li>Configurar regras e limites</li>
-                    <li>Testar o assistente</li>
-                    <li>Publicar e compartilhar com os alunos</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="personality">Personalidade</Label>
+                    <Select value={personality} onValueChange={(value: any) => setPersonality(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {personalityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div>
+                              <div className="font-medium">{option.label}</div>
+                              <div className="text-sm text-gray-600">{option.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="welcome">Mensagem de Boas-vindas (Opcional)</Label>
+                    <Textarea
+                      id="welcome"
+                      value={welcomeMessage}
+                      onChange={(e) => setWelcomeMessage(e.target.value)}
+                      placeholder="Personalize a primeira mensagem que os alunos verão..."
+                      rows={3}
+                    />
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="knowledge">
+            <Card>
+              <CardHeader>
+                <CardTitle>Material de Ensino</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Adicione PDFs, slides ou textos que o assistente deve conhecer para responder às perguntas dos alunos.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <KnowledgeUpload onKnowledgeChange={setKnowledge} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="preview">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Como os alunos verão</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 border rounded-lg bg-blue-50">
+                      <h3 className="font-semibold text-blue-900">
+                        {name || "Nome do Assistente"}
+                      </h3>
+                      <p className="text-blue-700 text-sm">
+                        Assistente de {subject || "Sua Matéria"}
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <div className="text-sm font-medium text-gray-700 mb-2">
+                        Mensagem de boas-vindas:
+                      </div>
+                      <p className="text-gray-900">
+                        {welcomeMessage || 
+                         (name && subject ? 
+                          `Olá! Eu sou o ${name}, seu assistente de ${subject}. Como posso te ajudar hoje?` :
+                          "Sua mensagem de boas-vindas aparecerá aqui..."
+                         )
+                        }
+                      </p>
+                    </div>
+
+                    {knowledge.length > 0 && (
+                      <div className="p-4 border rounded-lg bg-green-50">
+                        <div className="text-sm font-medium text-green-700 mb-2">
+                          Material disponível: {knowledge.length} item(s)
+                        </div>
+                        <ul className="text-sm text-green-600 space-y-1">
+                          {knowledge.slice(0, 3).map((item) => (
+                            <li key={item.id}>• {item.title}</li>
+                          ))}
+                          {knowledge.length > 3 && (
+                            <li>• E mais {knowledge.length - 3} item(s)...</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Button 
+                      onClick={handleSubmit} 
+                      className="w-full" 
+                      disabled={loading || !name.trim() || !subject.trim()}
+                    >
+                      {loading ? "Criando..." : "Criar Assistente"}
+                    </Button>
+
+                    {createdAssistant && (
+                      <div className="space-y-3 p-4 bg-green-50 rounded-lg">
+                        <div className="flex items-center text-green-700">
+                          <LinkIcon className="h-4 w-4 mr-2" />
+                          <span className="font-medium">Link para compartilhar:</span>
+                        </div>
+                        <div className="bg-white p-2 rounded border text-sm font-mono break-all">
+                          {generateShareableLink()}
+                        </div>
+                        <p className="text-xs text-green-600">
+                          Compartilhe este link com seus alunos para que eles possam conversar com o assistente.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="text-sm text-gray-600">
+                      <p><strong>Depois de criar:</strong></p>
+                      <ul className="list-disc list-inside space-y-1 mt-2">
+                        <li>Configure regras adicionais se necessário</li>
+                        <li>Teste o assistente</li>
+                        <li>Publique e compartilhe com os alunos</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

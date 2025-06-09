@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CreateAssistant from "./pages/CreateAssistant";
 import EditAssistant from "./pages/EditAssistant";
+import StudentChat from "./pages/StudentChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +80,7 @@ const AppRoutes = () => {
           <EditAssistant />
         </ProtectedRoute>
       } />
+      <Route path="/chat/:id" element={<StudentChat />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
