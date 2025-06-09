@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CreateAssistant from "./pages/CreateAssistant";
+import EditAssistant from "./pages/EditAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +73,11 @@ const AppRoutes = () => {
       <Route path="/create-assistant" element={
         <ProtectedRoute>
           <CreateAssistant />
+        </ProtectedRoute>
+      } />
+      <Route path="/assistant/:id/edit" element={
+        <ProtectedRoute>
+          <EditAssistant />
         </ProtectedRoute>
       } />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
