@@ -30,11 +30,14 @@ const StudentChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchAssistant();
+    if (id) {
+      fetchAssistant();
+    }
   }, [id]);
 
   useEffect(() => {
@@ -56,7 +59,10 @@ const StudentChat = () => {
         .eq('is_published', true)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching assistant:', error);
+        throw error;
+      }
 
       setAssistant(data);
       
@@ -75,6 +81,8 @@ const StudentChat = () => {
         description: "Assistente não encontrado ou não está publicado.",
         variant: "destructive"
       });
+    } finally {
+      setInitialLoading(false);
     }
   };
 
@@ -104,7 +112,7 @@ const StudentChat = () => {
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.response,
+        content: data.response || 'Desculpe, não consegui processar sua mensagem.',
         timestamp: new Date()
       };
 
@@ -128,10 +136,31 @@ const StudentChat = () => {
     }
   };
 
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando assistente...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!assistant) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <Card className="w-full max-w-md">
+          <CardContent className="text-center py-8">
+            <Bot className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Assistente não encontrado
+            </h3>
+            <p className="text-gray-600">
+              O assistente que você está procurando não foi encontrado ou não está publicado.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
