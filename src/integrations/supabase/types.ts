@@ -48,6 +48,41 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_analytics: {
+        Row: {
+          assistant_id: string | null
+          created_at: string
+          id: string
+          messages_count: number
+          session_duration_minutes: number | null
+          session_id: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          created_at?: string
+          id?: string
+          messages_count?: number
+          session_duration_minutes?: number | null
+          session_id: string
+        }
+        Update: {
+          assistant_id?: string | null
+          created_at?: string
+          id?: string
+          messages_count?: number
+          session_duration_minutes?: number | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_analytics_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_knowledge: {
         Row: {
           assistant_id: string
@@ -79,6 +114,111 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "assistant_knowledge_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_sessions: {
+        Row: {
+          assistant_id: string | null
+          created_at: string
+          id: string
+          messages: Json
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_sessions_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_gaps: {
+        Row: {
+          assistant_id: string | null
+          first_asked: string
+          frequency: number
+          id: string
+          last_asked: string
+          question: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          first_asked?: string
+          frequency?: number
+          id?: string
+          last_asked?: string
+          question: string
+        }
+        Update: {
+          assistant_id?: string | null
+          first_asked?: string
+          frequency?: number
+          id?: string
+          last_asked?: string
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_gaps_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_feedback: {
+        Row: {
+          assistant_id: string | null
+          created_at: string
+          feedback: number
+          id: string
+          message_index: number
+          session_id: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          created_at?: string
+          feedback: number
+          id?: string
+          message_index: number
+          session_id: string
+        }
+        Update: {
+          assistant_id?: string | null
+          created_at?: string
+          feedback?: number
+          id?: string
+          message_index?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_feedback_assistant_id_fkey"
             columns: ["assistant_id"]
             isOneToOne: false
             referencedRelation: "ai_assistants"

@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAssistants } from '@/hooks/useAssistants';
-import { useKnowledge } from '@/hooks/useKnowledge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,224 +9,118 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Brain, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Brain, FileText, Settings, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import AssistantTemplates from '@/components/AssistantTemplates';
 import KnowledgeUpload from '@/components/KnowledgeUpload';
 
-interface KnowledgeItem {
-  id: string;
-  type: 'file' | 'text';
-  title: string;
-  content: string;
-  file?: File;
+interface FormData {
+  name: string;
+  subject: string;
+  personality: 'friendly' | 'formal' | 'socratic' | 'creative';
+  welcome_message: string;
+  instructions: string;
 }
 
 const CreateAssistant = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [name, setName] = useState('');
-  const [subject, setSubject] = useState('');
-  const [personality, setPersonality] = useState<'friendly' | 'formal' | 'socratic' | 'creative'>('friendly');
-  const [welcomeMessage, setWelcomeMessage] = useState('');
-  const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [createdAssistant, setCreatedAssistant] = useState<any>(null);
-  
-  const { createAssistant } = useAssistants();
-  const { uploadPDF, addKnowledge } = useKnowledge(createdAssistant?.id || '');
   const navigate = useNavigate();
-
-  const personalityOptions = [
-    { 
-      value: 'friendly', 
-      label: 'Amigável e Incentivador', 
-      description: 'Tom caloroso, motivador e encorajador',
-      icon: '😊'
-    },
-    { 
-      value: 'formal', 
-      label: 'Formal e Profissional', 
-      description: 'Comunicação objetiva e respeitosa',
-      icon: '🎓'
-    },
-    { 
-      value: 'socratic', 
-      label: 'Socrático e Reflexivo', 
-      description: 'Faz perguntas para guiar o aprendizado',
-      icon: '🤔'
-    },
-    { 
-      value: 'creative', 
-      label: 'Criativo e Divertido', 
-      description: 'Usa analogias e exemplos criativos',
-      icon: '🎨'
-    }
-  ];
+  const { createAssistant } = useAssistants();
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    subject: '',
+    personality: 'friendly',
+    welcome_message: '',
+    instructions: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [createdAssistantId, setCreatedAssistantId] = useState<string | null>(null);
 
   const steps = [
-    { number: 1, title: 'Informações Básicas', description: 'Nome, matéria e personalidade' },
-    { number: 2, title: 'Material de Ensino', description: 'PDFs, textos e conteúdo' },
-    { number: 3, title: 'Finalização', description: 'Revisão e criação' }
+    { number: 1, title: 'Template', icon: <Sparkles className="h-4 w-4" /> },
+    { number: 2, title: 'Configuração', icon: <Settings className="h-4 w-4" /> },
+    { number: 3, title: 'Conhecimento', icon: <FileText className="h-4 w-4" /> },
+    { number: 4, title: 'Finalização', icon: <Brain className="h-4 w-4" /> }
   ];
 
-  const progress = (currentStep / steps.length) * 100;
+  const handleTemplateSelect = (template: any) => {
+    if (template.id !== 'custom') {
+      setFormData({
+        name: template.name,
+        subject: template.subject,
+        personality: template.personality,
+        welcome_message: template.welcomeMessage,
+        instructions: template.instructions
+      });
+    }
+    setStep(2);
+  };
 
-  const canProceedStep1 = name.trim() && subject.trim();
-  const canCreateAssistant = canProceedStep1;
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
+    if (step < 4) {
+      setStep(step + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+    if (step > 1) {
+      setStep(step - 1);
     }
   };
 
   const handleSubmit = async () => {
-    if (!canCreateAssistant) return;
-    
-    setLoading(true);
-
-    try {
-      // First create the assistant
-      const assistant = await createAssistant({
-        name,
-        subject,
-        personality,
-        welcome_message: welcomeMessage || `Olá! Eu sou o ${name}, seu assistente de ${subject}. Como posso te ajudar hoje?`,
-        guardrails: {
-          focus_only_provided_content: true,
-          no_direct_answers_to_exercises: true,
-          stay_in_subject: true
-        }
-      });
-
-      if (!assistant) {
-        throw new Error('Falha ao criar assistente');
-      }
-
-      setCreatedAssistant(assistant);
-
-      // Then upload knowledge if any
-      if (knowledge.length > 0) {
-        toast({
-          title: "Carregando material...",
-          description: "Processando arquivos e textos adicionados."
-        });
-
-        for (const item of knowledge) {
-          if (item.type === 'file' && item.file) {
-            await uploadPDF(item.file);
-          } else if (item.type === 'text') {
-            await addKnowledge({
-              content_type: 'text',
-              title: item.title,
-              content: item.content
-            });
-          }
-        }
-      }
-
+    if (!formData.name || !formData.subject) {
       toast({
-        title: "Sucesso!",
-        description: "Assistente criado com sucesso!"
-      });
-
-      navigate(`/assistant/${assistant.id}/edit`);
-    } catch (error) {
-      console.error('Error creating assistant:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o assistente.",
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha nome e matéria.",
         variant: "destructive"
       });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const assistantData = {
+        name: formData.name,
+        subject: formData.subject,
+        personality: formData.personality,
+        welcome_message: formData.welcome_message || `Olá! Sou ${formData.name}, seu assistente de ${formData.subject}. Como posso ajudá-lo hoje?`,
+        guardrails: {
+          instructions: formData.instructions,
+          behavior: `Atue como um assistente especializado em ${formData.subject} com personalidade ${formData.personality}. ${formData.instructions}`
+        }
+      };
+
+      const result = await createAssistant(assistantData);
+      if (result) {
+        setCreatedAssistantId(result.id);
+        setStep(3);
+      }
+    } catch (error) {
+      console.error('Error creating assistant:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
+  const handleFinish = () => {
+    navigate('/dashboard');
+  };
+
+  const getStepContent = () => {
+    switch (step) {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-base font-medium">Nome do Assistente *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Professor Bio, Assistente de História..."
-                className="text-lg p-4"
-                required
-              />
-              <p className="text-sm text-gray-600">
-                Escolha um nome amigável que seus alunos reconhecerão facilmente
-              </p>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Escolha um Template</h2>
+              <p className="text-gray-600">Comece com um template otimizado ou crie do zero</p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="subject" className="text-base font-medium">Matéria/Disciplina *</Label>
-              <Input
-                id="subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Ex: Biologia Celular, História do Brasil..."
-                className="text-lg p-4"
-                required
-              />
-              <p className="text-sm text-gray-600">
-                Seja específico para melhores resultados
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <Label className="text-base font-medium">Personalidade do Assistente</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {personalityOptions.map((option) => (
-                  <Card 
-                    key={option.value} 
-                    className={`cursor-pointer transition-all ${
-                      personality === option.value 
-                        ? 'ring-2 ring-blue-500 bg-blue-50' 
-                        : 'hover:shadow-md'
-                    }`}
-                    onClick={() => setPersonality(option.value as any)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{option.icon}</span>
-                        <div className="flex-1">
-                          <h4 className="font-medium">{option.label}</h4>
-                          <p className="text-sm text-gray-600">{option.description}</p>
-                        </div>
-                        {personality === option.value && (
-                          <CheckCircle className="h-5 w-5 text-blue-500" />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="welcome" className="text-base font-medium">Mensagem de Boas-vindas (Opcional)</Label>
-              <Textarea
-                id="welcome"
-                value={welcomeMessage}
-                onChange={(e) => setWelcomeMessage(e.target.value)}
-                placeholder="Personalize a primeira mensagem que os alunos verão..."
-                rows={3}
-                className="resize-none"
-              />
-              <p className="text-sm text-gray-600">
-                Se não preenchido, será gerada uma mensagem automática
-              </p>
-            </div>
+            <AssistantTemplates onSelectTemplate={handleTemplateSelect} />
           </div>
         );
 
@@ -235,13 +128,78 @@ const CreateAssistant = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">Adicione Material de Ensino</h3>
-              <p className="text-gray-600">
-                O assistente usará este conteúdo para responder às perguntas dos alunos.
-                Você pode adicionar mais material depois.
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuração do Assistente</h2>
+              <p className="text-gray-600">Defina as características básicas do seu assistente</p>
             </div>
-            <KnowledgeUpload onKnowledgeChange={setKnowledge} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Nome do Assistente *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Ex: Professor Carlos"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="subject">Matéria/Área *</Label>
+                  <Input
+                    id="subject"
+                    value={formData.subject}
+                    onChange={(e) => handleInputChange('subject', e.target.value)}
+                    placeholder="Ex: Matemática, História, Programação"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="personality">Personalidade</Label>
+                  <Select 
+                    value={formData.personality} 
+                    onValueChange={(value: any) => handleInputChange('personality', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="friendly">Amigável - Caloroso e acessível</SelectItem>
+                      <SelectItem value="formal">Formal - Profissional e direto</SelectItem>
+                      <SelectItem value="socratic">Socrático - Ensina através de perguntas</SelectItem>
+                      <SelectItem value="creative">Criativo - Usa analogias e exemplos divertidos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="welcome_message">Mensagem de Boas-vindas</Label>
+                  <Textarea
+                    id="welcome_message"
+                    value={formData.welcome_message}
+                    onChange={(e) => handleInputChange('welcome_message', e.target.value)}
+                    placeholder="Como o assistente irá cumprimentar os alunos..."
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="instructions">Instruções Especiais</Label>
+                  <Textarea
+                    id="instructions"
+                    value={formData.instructions}
+                    onChange={(e) => handleInputChange('instructions', e.target.value)}
+                    placeholder="Instruções específicas sobre como o assistente deve se comportar..."
+                    rows={5}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ex: "Sempre cite as fontes", "Peça para o aluno explicar com suas palavras", etc.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         );
 
@@ -249,52 +207,58 @@ const CreateAssistant = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">Revisão Final</h3>
-              <p className="text-gray-600">
-                Confira as informações antes de criar seu assistente
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Base de Conhecimento</h2>
+              <p className="text-gray-600">Adicione materiais para enriquecer as respostas do assistente</p>
+            </div>
+
+            {createdAssistantId ? (
+              <KnowledgeUpload assistantId={createdAssistantId} />
+            ) : (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <p className="text-gray-600">
+                    Primeiro você precisa criar o assistente para adicionar conhecimento.
+                  </p>
+                  <Button onClick={() => setStep(2)} className="mt-4">
+                    Voltar para Configuração
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Assistente Criado!</h2>
+              <p className="text-gray-600">Seu assistente está pronto para ajudar os alunos</p>
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Brain className="h-5 w-5 mr-2" />
-                  Informações do Assistente
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <span className="font-medium">Nome:</span> {name}
-                </div>
-                <div>
-                  <span className="font-medium">Matéria:</span> {subject}
-                </div>
-                <div>
-                  <span className="font-medium">Personalidade:</span>{' '}
-                  {personalityOptions.find(p => p.value === personality)?.label}
-                </div>
-                {welcomeMessage && (
-                  <div>
-                    <span className="font-medium">Mensagem de boas-vindas:</span>
-                    <p className="mt-1 p-3 bg-gray-50 rounded text-sm">
-                      {welcomeMessage}
-                    </p>
+              <CardContent className="text-center py-8">
+                <div className="space-y-4">
+                  <Brain className="h-16 w-16 text-green-600 mx-auto" />
+                  <h3 className="text-xl font-semibold text-gray-900">{formData.name}</h3>
+                  <p className="text-gray-600">Assistente de {formData.subject}</p>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 mt-6">
+                    <h4 className="font-medium text-gray-900 mb-2">Próximos passos:</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Publique o assistente no dashboard</li>
+                      <li>• Compartilhe o link com seus alunos</li>
+                      <li>• Monitore as análises de uso</li>
+                      <li>• Atualize a base de conhecimento conforme necessário</li>
+                    </ul>
                   </div>
-                )}
-                <div>
-                  <span className="font-medium">Material adicionado:</span> {knowledge.length} item(s)
+
+                  <Button onClick={handleFinish} className="mt-6">
+                    Ir para Dashboard
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-
-            <Button 
-              onClick={handleSubmit} 
-              className="w-full" 
-              size="lg"
-              disabled={loading || !canCreateAssistant}
-            >
-              {loading ? "Criando..." : "Criar Assistente"}
-            </Button>
           </div>
         );
 
@@ -305,70 +269,102 @@ const CreateAssistant = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <Brain className="h-6 w-6 text-blue-600 mr-2" />
-            <h1 className="text-xl font-semibold text-gray-900">Criar Novo Assistente</h1>
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/dashboard')}
+                className="mr-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <h1 className="text-xl font-semibold text-gray-900">Criar Assistente</h1>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Progress */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {steps[currentStep - 1].title}
-            </h2>
-            <span className="text-sm text-gray-600">
-              Passo {currentStep} de {steps.length}
-            </span>
+            {steps.map((stepItem, index) => (
+              <div
+                key={stepItem.number}
+                className={`flex items-center ${
+                  index < steps.length - 1 ? 'flex-1' : ''
+                }`}
+              >
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                  step >= stepItem.number
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'border-gray-300 text-gray-500'
+                }`}>
+                  {stepItem.icon}
+                </div>
+                <div className="ml-3">
+                  <p className={`text-sm font-medium ${
+                    step >= stepItem.number ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    {stepItem.title}
+                  </p>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-4 ${
+                    step > stepItem.number ? 'bg-blue-600' : 'bg-gray-300'
+                  }`} />
+                )}
+              </div>
+            ))}
           </div>
-          <Progress value={progress} className="mb-4" />
-          <p className="text-gray-600">{steps[currentStep - 1].description}</p>
+          <Progress value={(step / 4) * 100} className="h-2" />
         </div>
 
         {/* Step Content */}
-        <Card className="mb-8">
+        <Card>
           <CardContent className="p-8">
-            {renderStepContent()}
+            {getStepContent()}
           </CardContent>
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Anterior
-          </Button>
-          
-          {currentStep < steps.length ? (
-            <Button 
-              onClick={handleNext}
-              disabled={currentStep === 1 && !canProceedStep1}
+        {step !== 1 && step !== 4 && (
+          <div className="flex justify-between mt-8">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={step === 1}
             >
-              Próximo
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Anterior
             </Button>
-          ) : null}
-        </div>
-      </main>
+
+            {step === 2 ? (
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Criar Assistente
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleNext} disabled={step === 4}>
+                Próximo
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

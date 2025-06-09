@@ -6,13 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, MessageSquare, ThumbsUp, ThumbsDown, Download, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  feedback?: number;
+  suggestions?: string[];
 }
 
 interface Assistant {
@@ -37,11 +39,18 @@ const StudentChat = () => {
   useEffect(() => {
     if (id) {
       fetchAssistant();
+      loadChatHistory();
     }
   }, [id]);
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatHistory();
+    }
   }, [messages]);
 
   const scrollToBottom = () => {
@@ -66,13 +75,15 @@ const StudentChat = () => {
 
       setAssistant(data);
       
-      // Add welcome message
-      if (data.welcome_message) {
-        setMessages([{
+      // Add welcome message if not already loaded from history
+      if (data.welcome_message && messages.length === 0) {
+        const welcomeMessage: Message = {
           role: 'assistant',
           content: data.welcome_message,
-          timestamp: new Date()
-        }]);
+          timestamp: new Date(),
+          suggestions: ['Como você pode me ajudar?', 'Quais tópicos você domina?', 'Vamos começar!']
+        };
+        setMessages([welcomeMessage]);
       }
     } catch (error) {
       console.error('Error fetching assistant:', error);
@@ -86,12 +97,72 @@ const StudentChat = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || !assistant || loading) return;
+  const loadChatHistory = () => {
+    if (!id) return;
+    
+    const historyKey = `chat_history_${id}`;
+    const savedHistory = localStorage.getItem(historyKey);
+    
+    if (savedHistory) {
+      try {
+        const parsedHistory = JSON.parse(savedHistory);
+        const messagesWithDates = parsedHistory.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(messagesWithDates);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    }
+  };
+
+  const saveChatHistory = () => {
+    if (!id) return;
+    
+    const historyKey = `chat_history_${id}`;
+    localStorage.setItem(historyKey, JSON.stringify(messages));
+  };
+
+  const clearChatHistory = () => {
+    if (!id) return;
+    
+    const historyKey = `chat_history_${id}`;
+    localStorage.removeItem(historyKey);
+    
+    // Reset to welcome message only
+    if (assistant?.welcome_message) {
+      const welcomeMessage: Message = {
+        role: 'assistant',
+        content: assistant.welcome_message,
+        timestamp: new Date(),
+        suggestions: ['Como você pode me ajudar?', 'Quais tópicos você domina?', 'Vamos começar!']
+      };
+      setMessages([welcomeMessage]);
+    } else {
+      setMessages([]);
+    }
+    
+    toast({
+      title: "Conversa limpa",
+      description: "O histórico da conversa foi removido."
+    });
+  };
+
+  const sendMessage = async (messageText?: string) => {
+    const textToSend = messageText || inputMessage;
+    if (!textToSend.trim() || !assistant || loading) return;
+
+    // Handle special commands
+    if (textToSend === '/resumo') {
+      generateSummary();
+      setInputMessage('');
+      return;
+    }
 
     const userMessage: Message = {
       role: 'user',
-      content: inputMessage,
+      content: textToSend,
       timestamp: new Date()
     };
 
@@ -102,9 +173,13 @@ const StudentChat = () => {
     try {
       const { data, error } = await supabase.functions.invoke('gemini-chat', {
         body: {
-          message: inputMessage,
+          message: textToSend,
           assistantId: assistant.id,
-          sessionId
+          sessionId,
+          conversationHistory: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
         }
       });
 
@@ -113,10 +188,20 @@ const StudentChat = () => {
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.response || 'Desculpe, não consegui processar sua mensagem.',
-        timestamp: new Date()
+        timestamp: new Date(),
+        suggestions: data.suggestions || []
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Track analytics
+      trackAnalytics();
+
+      // Check for knowledge gaps
+      if (data.response?.includes('não sei') || data.response?.includes('não tenho informação')) {
+        trackKnowledgeGap(textToSend);
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -129,11 +214,161 @@ const StudentChat = () => {
     }
   };
 
+  const generateSummary = async () => {
+    if (messages.length < 2) {
+      toast({
+        title: "Resumo",
+        description: "Não há conversa suficiente para gerar um resumo.",
+        variant: "default"
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('gemini-chat', {
+        body: {
+          message: 'Por favor, faça um resumo dos pontos principais desta conversa.',
+          assistantId: assistant?.id,
+          sessionId,
+          conversationHistory: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          isCommand: true
+        }
+      });
+
+      if (error) throw error;
+
+      const summaryMessage: Message = {
+        role: 'assistant',
+        content: `📋 **Resumo da Conversa:**\n\n${data.response}`,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, summaryMessage]);
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o resumo.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitFeedback = async (messageIndex: number, feedback: number) => {
+    try {
+      await supabase
+        .from('message_feedback')
+        .insert({
+          assistant_id: assistant?.id,
+          session_id: sessionId,
+          message_index: messageIndex,
+          feedback
+        });
+
+      // Update local message
+      setMessages(prev => prev.map((msg, idx) => 
+        idx === messageIndex ? { ...msg, feedback } : msg
+      ));
+
+      toast({
+        title: "Obrigado!",
+        description: "Seu feedback foi registrado.",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  };
+
+  const trackAnalytics = async () => {
+    try {
+      await supabase
+        .from('assistant_analytics')
+        .insert({
+          assistant_id: assistant?.id,
+          session_id: sessionId,
+          messages_count: messages.length + 1
+        });
+    } catch (error) {
+      console.error('Error tracking analytics:', error);
+    }
+  };
+
+  const trackKnowledgeGap = async (question: string) => {
+    try {
+      const { data: existing } = await supabase
+        .from('knowledge_gaps')
+        .select('*')
+        .eq('assistant_id', assistant?.id)
+        .eq('question', question)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('knowledge_gaps')
+          .update({
+            frequency: existing.frequency + 1,
+            last_asked: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('knowledge_gaps')
+          .insert({
+            assistant_id: assistant?.id,
+            question,
+            frequency: 1
+          });
+      }
+    } catch (error) {
+      console.error('Error tracking knowledge gap:', error);
+    }
+  };
+
+  const exportConversation = () => {
+    const conversationText = messages.map(msg => 
+      `**${msg.role === 'user' ? 'Você' : assistant?.name}** (${msg.timestamp.toLocaleString()}):\n${msg.content}\n\n`
+    ).join('');
+
+    const blob = new Blob([conversationText], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversa-${assistant?.name}-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Conversa exportada",
+      description: "O arquivo foi baixado com sucesso!"
+    });
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const renderMarkdown = (content: string) => {
+    // Simple markdown rendering for bold, lists, and code blocks
+    return content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/^- (.*$)/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+      .replace(/\n/g, '<br>');
   };
 
   if (initialLoading) {
@@ -170,20 +405,42 @@ const StudentChat = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-3">
-            <div className="bg-blue-100 p-2 rounded-lg">
-              <Bot className="h-6 w-6 text-blue-600" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <Bot className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">{assistant.name}</h1>
+                <p className="text-sm text-gray-600">Assistente de {assistant.subject}</p>
+              </div>
+              <Badge variant="secondary" className="ml-auto">
+                {assistant.personality === 'friendly' && 'Amigável'}
+                {assistant.personality === 'formal' && 'Formal'}
+                {assistant.personality === 'socratic' && 'Socrático'}
+                {assistant.personality === 'creative' && 'Criativo'}
+              </Badge>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">{assistant.name}</h1>
-              <p className="text-sm text-gray-600">Assistente de {assistant.subject}</p>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportConversation}
+                disabled={messages.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearChatHistory}
+                disabled={messages.length === 0}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Limpar
+              </Button>
             </div>
-            <Badge variant="secondary" className="ml-auto">
-              {assistant.personality === 'friendly' && 'Amigável'}
-              {assistant.personality === 'formal' && 'Formal'}
-              {assistant.personality === 'socratic' && 'Socrático'}
-              {assistant.personality === 'creative' && 'Criativo'}
-            </Badge>
           </div>
         </div>
       </header>
@@ -220,17 +477,65 @@ const StudentChat = () => {
                         <Bot className="h-4 w-4" />
                       )}
                     </div>
-                    <div className={`p-3 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-900'
-                    }`}>
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      <p className={`text-xs mt-1 ${
-                        message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    <div className="flex flex-col space-y-2">
+                      <div className={`p-3 rounded-lg ${
+                        message.role === 'user'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 text-gray-900'
                       }`}>
-                        {message.timestamp.toLocaleTimeString()}
-                      </p>
+                        <div 
+                          className="text-sm whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
+                        />
+                        <p className={`text-xs mt-1 ${
+                          message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                        }`}>
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                      </div>
+                      
+                      {/* Feedback buttons for assistant messages */}
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => submitFeedback(index, 1)}
+                            className={`h-8 w-8 p-0 ${
+                              message.feedback === 1 ? 'bg-green-100 text-green-600' : ''
+                            }`}
+                          >
+                            <ThumbsUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => submitFeedback(index, -1)}
+                            className={`h-8 w-8 p-0 ${
+                              message.feedback === -1 ? 'bg-red-100 text-red-600' : ''
+                            }`}
+                          >
+                            <ThumbsDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Suggestion buttons */}
+                      {message.suggestions && message.suggestions.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {message.suggestions.map((suggestion, idx) => (
+                            <Button
+                              key={idx}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => sendMessage(suggestion)}
+                              className="text-xs"
+                            >
+                              {suggestion}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -261,12 +566,12 @@ const StudentChat = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Digite sua pergunta..."
+                  placeholder="Digite sua pergunta ou /resumo para gerar um resumo..."
                   className="flex-1"
                   disabled={loading}
                 />
                 <Button 
-                  onClick={sendMessage} 
+                  onClick={() => sendMessage()} 
                   disabled={!inputMessage.trim() || loading}
                   size="icon"
                 >
@@ -274,7 +579,7 @@ const StudentChat = () => {
                 </Button>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Pressione Enter para enviar
+                Pressione Enter para enviar • Digite /resumo para resumir a conversa
               </p>
             </div>
           </CardContent>

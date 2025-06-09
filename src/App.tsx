@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateAssistant from "./pages/CreateAssistant";
 import EditAssistant from "./pages/EditAssistant";
 import StudentChat from "./pages/StudentChat";
+import AssistantAnalytics from "./pages/AssistantAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +80,11 @@ const AppRoutes = () => {
       <Route path="/assistant/:id/edit" element={
         <ProtectedRoute>
           <EditAssistant />
+        </ProtectedRoute>
+      } />
+      <Route path="/assistant/:id/analytics" element={
+        <ProtectedRoute>
+          <AssistantAnalytics />
         </ProtectedRoute>
       } />
       <Route path="/chat/:id" element={<StudentChat />} />
