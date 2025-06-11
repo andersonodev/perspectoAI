@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, MessageSquare, ThumbsUp, ThumbsDown, Download, RotateCcw } from 'lucide-react';
+import { Send, Bot, User, MessageSquare, ThumbsUp, ThumbsDown, Download, RotateCcw, Gamepad2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import LearningProfile from '@/components/LearningProfile';
+import AdaptiveLearningPaths from '@/components/AdaptiveLearningPaths';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -34,6 +36,9 @@ const StudentChat = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
+  const [showProfile, setShowProfile] = useState(false);
+  const [showPaths, setShowPaths] = useState(false);
+  const [practiceMode, setPracticeMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -160,6 +165,13 @@ const StudentChat = () => {
       return;
     }
 
+    if (textToSend.startsWith('/praticar')) {
+      const topic = textToSend.replace('/praticar', '').trim() || assistant.subject;
+      generatePracticeExercise(topic);
+      setInputMessage('');
+      return;
+    }
+
     const userMessage: Message = {
       role: 'user',
       content: textToSend,
@@ -179,7 +191,13 @@ const StudentChat = () => {
           conversationHistory: messages.map(m => ({
             role: m.role,
             content: m.content
-          }))
+          })),
+          learningProfile: {
+            // This would be dynamically determined based on conversation analysis
+            style: 'adaptive',
+            pace: 'medium',
+            preferences: ['examples', 'analogies']
+          }
         }
       });
 
@@ -200,6 +218,11 @@ const StudentChat = () => {
       // Check for knowledge gaps
       if (data.response?.includes('não sei') || data.response?.includes('não tenho informação')) {
         trackKnowledgeGap(textToSend);
+      }
+
+      // Show learning paths after significant interaction
+      if (messages.length > 4 && Math.random() > 0.7) {
+        setShowPaths(true);
       }
 
     } catch (error) {
@@ -254,6 +277,43 @@ const StudentChat = () => {
       toast({
         title: "Erro",
         description: "Não foi possível gerar o resumo.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generatePracticeExercise = async (topic: string) => {
+    setLoading(true);
+    setPracticeMode(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('gemini-chat', {
+        body: {
+          message: `Gere um exercício prático sobre ${topic}. Inclua: 1) Uma pergunta desafiadora, 2) Dicas para resolução, 3) A resposta correta com explicação detalhada.`,
+          assistantId: assistant?.id,
+          sessionId,
+          conversationHistory: [],
+          isPracticeMode: true
+        }
+      });
+
+      if (error) throw error;
+
+      const exerciseMessage: Message = {
+        role: 'assistant',
+        content: `🎯 **Exercício Prático - ${topic}:**\n\n${data.response}`,
+        timestamp: new Date(),
+        suggestions: ['Preciso de uma dica', 'Mostrar resposta', 'Novo exercício']
+      };
+
+      setMessages(prev => [...prev, exerciseMessage]);
+    } catch (error) {
+      console.error('Error generating exercise:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o exercício.",
         variant: "destructive"
       });
     } finally {
@@ -371,6 +431,12 @@ const StudentChat = () => {
       .replace(/\n/g, '<br>');
   };
 
+  const handlePathSelection = (path: any) => {
+    const pathMessage = `Vamos seguir o caminho: ${path.title}. ${path.description}`;
+    sendMessage(pathMessage);
+    setShowPaths(false);
+  };
+
   if (initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -404,7 +470,7 @@ const StudentChat = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="bg-blue-100 p-2 rounded-lg">
@@ -422,6 +488,13 @@ const StudentChat = () => {
               </Badge>
             </div>
             <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProfile(!showProfile)}
+              >
+                Perfil de Aprendizagem
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -445,145 +518,189 @@ const StudentChat = () => {
         </div>
       </header>
 
-      {/* Chat Area */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <Card className="h-[600px] flex flex-col">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center text-lg">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Chat com {assistant.name}
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="flex-1 overflow-hidden p-0">
-            {/* Messages */}
-            <div className="h-full overflow-y-auto p-4 space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            {showProfile && (
+              <LearningProfile sessionId={sessionId} assistantId={assistant.id} />
+            )}
+            
+            {showPaths && (
+              <AdaptiveLearningPaths
+                currentTopic={assistant.subject}
+                studentLevel="intermediate"
+                onSelectPath={handlePathSelection}
+              />
+            )}
+            
+            {/* Practice Mode Toggle */}
+            <Card>
+              <CardContent className="p-4">
+                <Button
+                  variant={practiceMode ? "default" : "outline"}
+                  className="w-full"
+                  onClick={() => {
+                    setPracticeMode(!practiceMode);
+                    if (!practiceMode) {
+                      generatePracticeExercise(assistant.subject);
+                    }
+                  }}
                 >
-                  <div className={`flex items-start space-x-2 max-w-[80%] ${
-                    message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                  }`}>
-                    <div className={`p-2 rounded-full ${
-                      message.role === 'user' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {message.role === 'user' ? (
-                        <User className="h-4 w-4" />
-                      ) : (
-                        <Bot className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div className="flex flex-col space-y-2">
-                      <div className={`p-3 rounded-lg ${
-                        message.role === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-900'
-                      }`}>
-                        <div 
-                          className="text-sm whitespace-pre-wrap"
-                          dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
-                        />
-                        <p className={`text-xs mt-1 ${
-                          message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                        }`}>
-                          {message.timestamp.toLocaleTimeString()}
-                        </p>
-                      </div>
-                      
-                      {/* Feedback buttons for assistant messages */}
-                      {message.role === 'assistant' && (
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => submitFeedback(index, 1)}
-                            className={`h-8 w-8 p-0 ${
-                              message.feedback === 1 ? 'bg-green-100 text-green-600' : ''
-                            }`}
-                          >
-                            <ThumbsUp className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => submitFeedback(index, -1)}
-                            className={`h-8 w-8 p-0 ${
-                              message.feedback === -1 ? 'bg-red-100 text-red-600' : ''
-                            }`}
-                          >
-                            <ThumbsDown className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {/* Suggestion buttons */}
-                      {message.suggestions && message.suggestions.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {message.suggestions.map((suggestion, idx) => (
-                            <Button
-                              key={idx}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => sendMessage(suggestion)}
-                              className="text-xs"
-                            >
-                              {suggestion}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="flex items-start space-x-2">
-                    <div className="p-2 rounded-full bg-gray-100 text-gray-600">
-                      <Bot className="h-4 w-4" />
-                    </div>
-                    <div className="p-3 rounded-lg bg-gray-200">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Area */}
-            <div className="border-t p-4">
-              <div className="flex space-x-2">
-                <Input
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Digite sua pergunta ou /resumo para gerar um resumo..."
-                  className="flex-1"
-                  disabled={loading}
-                />
-                <Button 
-                  onClick={() => sendMessage()} 
-                  disabled={!inputMessage.trim() || loading}
-                  size="icon"
-                >
-                  <Send className="h-4 w-4" />
+                  <Gamepad2 className="h-4 w-4 mr-2" />
+                  {practiceMode ? 'Sair do Modo Prática' : 'Modo Prática'}
                 </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Pressione Enter para enviar • Digite /resumo para resumir a conversa
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Chat Area */}
+          <div className="lg:col-span-3">
+            <Card className="h-[600px] flex flex-col">
+              <CardHeader className="border-b">
+                <CardTitle className="flex items-center text-lg">
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Chat com {assistant.name}
+                  {practiceMode && (
+                    <Badge variant="default" className="ml-2 bg-purple-600">
+                      Modo Prática
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="flex-1 overflow-hidden p-0">
+                {/* Messages */}
+                <div className="h-full overflow-y-auto p-4 space-y-4">
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`flex items-start space-x-2 max-w-[80%] ${
+                        message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                      }`}>
+                        <div className={`p-2 rounded-full ${
+                          message.role === 'user' 
+                            ? 'bg-blue-100 text-blue-600' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {message.role === 'user' ? (
+                            <User className="h-4 w-4" />
+                          ) : (
+                            <Bot className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="flex flex-col space-y-2">
+                          <div className={`p-3 rounded-lg ${
+                            message.role === 'user'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-200 text-gray-900'
+                          }`}>
+                            <div 
+                              className="text-sm whitespace-pre-wrap"
+                              dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
+                            />
+                            <p className={`text-xs mt-1 ${
+                              message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          
+                          {/* Feedback buttons for assistant messages */}
+                          {message.role === 'assistant' && (
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => submitFeedback(index, 1)}
+                                className={`h-8 w-8 p-0 ${
+                                  message.feedback === 1 ? 'bg-green-100 text-green-600' : ''
+                                }`}
+                              >
+                                <ThumbsUp className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => submitFeedback(index, -1)}
+                                className={`h-8 w-8 p-0 ${
+                                  message.feedback === -1 ? 'bg-red-100 text-red-600' : ''
+                                }`}
+                              >
+                                <ThumbsDown className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Suggestion buttons */}
+                          {message.suggestions && message.suggestions.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {message.suggestions.map((suggestion, idx) => (
+                                <Button
+                                  key={idx}
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => sendMessage(suggestion)}
+                                  className="text-xs"
+                                >
+                                  {suggestion}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {loading && (
+                    <div className="flex justify-start">
+                      <div className="flex items-start space-x-2">
+                        <div className="p-2 rounded-full bg-gray-100 text-gray-600">
+                          <Bot className="h-4 w-4" />
+                        </div>
+                        <div className="p-3 rounded-lg bg-gray-200">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input Area */}
+                <div className="border-t p-4">
+                  <div className="flex space-x-2">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Digite sua pergunta, /resumo para resumir, ou /praticar [tópico] para exercícios..."
+                      className="flex-1"
+                      disabled={loading}
+                    />
+                    <Button 
+                      onClick={() => sendMessage()} 
+                      disabled={!inputMessage.trim() || loading}
+                      size="icon"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Pressione Enter para enviar • Digite /resumo para resumir • /praticar [tópico] para exercícios
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
