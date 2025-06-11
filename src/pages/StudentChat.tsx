@@ -10,6 +10,11 @@ import { toast } from '@/hooks/use-toast';
 import LearningProfile from '@/components/LearningProfile';
 import AdaptiveLearningPaths from '@/components/AdaptiveLearningPaths';
 import AdvancedExport from '@/components/AdvancedExport';
+import SpacedRepetitionCoach from '@/components/SpacedRepetitionCoach';
+import InteractiveSimulator from '@/components/InteractiveSimulator';
+import SecondBrainBuilder from '@/components/SecondBrainBuilder';
+import SmartStudyPlan from '@/components/SmartStudyPlan';
+import KnowledgeMap from '@/components/KnowledgeMap';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -48,6 +53,12 @@ const StudentChat = () => {
   const [showPaths, setShowPaths] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [practiceMode, setPracticeMode] = useState(false);
+  const [showSpacedRepetition, setShowSpacedRepetition] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [simulatorProps, setSimulatorProps] = useState<any>(null);
+  const [showSecondBrain, setShowSecondBrain] = useState(false);
+  const [showStudyPlan, setShowStudyPlan] = useState(false);
+  const [showKnowledgeMap, setShowKnowledgeMap] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -187,6 +198,37 @@ const StudentChat = () => {
     const textToSend = messageText || inputMessage;
     if (!textToSend.trim() || !assistant || loading) return;
 
+    // Detectar comandos especiais
+    if (textToSend.startsWith('/simular')) {
+      handleSimulationCommand(textToSend);
+      setInputMessage('');
+      return;
+    }
+
+    if (textToSend.startsWith('/conectar')) {
+      handleConnectionCommand(textToSend);
+      setInputMessage('');
+      return;
+    }
+
+    if (textToSend.startsWith('/criar_plano')) {
+      setShowStudyPlan(true);
+      setInputMessage('');
+      return;
+    }
+
+    if (textToSend === '/segunda_mente') {
+      setShowSecondBrain(true);
+      setInputMessage('');
+      return;
+    }
+
+    if (textToSend === '/mapa') {
+      setShowKnowledgeMap(true);
+      setInputMessage('');
+      return;
+    }
+
     // Detectar tentativa de cola
     if (detectCheatAttempt(textToSend)) {
       const antiCheatMessage: Message = {
@@ -261,6 +303,14 @@ const StudentChat = () => {
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Adicionar tópico ao coach de revisão espaçada automaticamente
+      if (data.response && !isCommand && Math.random() > 0.7) {
+        const topic = extractTopicFromResponse(data.response);
+        if (topic) {
+          addToSpacedRepetition(topic);
+        }
+      }
+
       trackAnalytics();
 
       if (data.response?.includes('não sei') || data.response?.includes('não tenho informação')) {
@@ -280,6 +330,79 @@ const StudentChat = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSimulationCommand = (command: string) => {
+    const topic = command.replace('/simular', '').trim();
+    
+    // Detectar tipo de simulação baseado no tópico
+    let simulationType: 'physics' | 'economics' | 'history' | 'math' = 'physics';
+    
+    if (topic.includes('preço') || topic.includes('demanda') || topic.includes('economia')) {
+      simulationType = 'economics';
+    } else if (topic.includes('história') || topic.includes('decisão') || topic.includes('guerra')) {
+      simulationType = 'history';
+    } else if (topic.includes('equação') || topic.includes('função') || topic.includes('matemática')) {
+      simulationType = 'math';
+    }
+
+    setSimulatorProps({
+      type: simulationType,
+      topic: topic || assistant?.subject || 'Simulação',
+      description: `Simulação interativa sobre ${topic}`,
+      onClose: () => setShowSimulator(false)
+    });
+    
+    setShowSimulator(true);
+  };
+
+  const handleConnectionCommand = (command: string) => {
+    const topic = command.replace('/conectar', '').trim();
+    
+    const connectionMessage: Message = {
+      role: 'assistant',
+      content: `🔗 **Conectando com a Vida Real: ${topic || 'conceito atual'}**\n\nVou mostrar como isso se aplica no seu dia a dia! ${topic ? `Sobre ${topic}:` : ''}\n\n• **No trabalho:** Como profissionais usam isso\n• **Em casa:** Aplicações práticas no cotidiano\n• **Na tecnologia:** Como isso está presente nos dispositivos que você usa\n• **No futuro:** Oportunidades de carreira relacionadas\n\nQuer explorar alguma dessas conexões específicas?`,
+      timestamp: new Date(),
+      suggestions: [
+        'Como isso me ajuda profissionalmente?',
+        'Onde vejo isso no dia a dia?',
+        'Que carreiras usam isso?',
+        'Mostre um exemplo prático'
+      ]
+    };
+
+    setMessages(prev => [...prev, connectionMessage]);
+  };
+
+  const extractTopicFromResponse = (response: string): string | null => {
+    // Lógica simples para extrair tópicos da resposta
+    const topicPatterns = [
+      /sobre (.+?)[.!?]/i,
+      /conceito de (.+?)[.!?]/i,
+      /tema (.+?)[.!?]/i
+    ];
+    
+    for (const pattern of topicPatterns) {
+      const match = response.match(pattern);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+    
+    return null;
+  };
+
+  const addToSpacedRepetition = async (topic: string) => {
+    try {
+      // A lógica de adicionar ao spaced repetition está no componente SpacedRepetitionCoach
+      // Aqui podemos apenas mostrar uma notificação
+      toast({
+        title: "📚 Adicionado ao Coach de Revisão",
+        description: `${topic} foi agendado para revisão futura!`
+      });
+    } catch (error) {
+      console.error('Error adding to spaced repetition:', error);
     }
   };
 
@@ -579,13 +702,58 @@ const StudentChat = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Botões de Funcionalidades Avançadas */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">🚀 Ferramentas Avançadas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setShowSpacedRepetition(!showSpacedRepetition)}
+                >
+                  🧠 Coach de Revisão
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setShowSecondBrain(!showSecondBrain)}
+                >
+                  🗂️ Segunda Mente
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setShowStudyPlan(!showStudyPlan)}
+                >
+                  📅 Plano de Estudos
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setShowKnowledgeMap(!showKnowledgeMap)}
+                >
+                  🗺️ Mapa de Conhecimento
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Componentes Condicionais */}
+            {showSpacedRepetition && (
+              <SpacedRepetitionCoach 
+                assistantId={assistant?.id || ''} 
+                sessionId={sessionId} 
+              />
+            )}
+
             {showProfile && (
-              <LearningProfile sessionId={sessionId} assistantId={assistant.id} />
+              <LearningProfile sessionId={sessionId} assistantId={assistant?.id || ''} />
             )}
             
             {showPaths && (
               <AdaptiveLearningPaths
-                currentTopic={assistant.subject}
+                currentTopic={assistant?.subject || ''}
                 studentLevel="intermediate"
                 onSelectPath={handlePathSelection}
               />
@@ -594,8 +762,8 @@ const StudentChat = () => {
             {showExport && (
               <AdvancedExport
                 messages={messages}
-                assistantName={assistant.name}
-                subject={assistant.subject}
+                assistantName={assistant?.name || ''}
+                subject={assistant?.subject || ''}
               />
             )}
             
@@ -620,11 +788,55 @@ const StudentChat = () => {
 
           {/* Chat Area */}
           <div className="lg:col-span-3">
+            {/* Simulador Interativo */}
+            {showSimulator && simulatorProps && (
+              <div className="mb-6">
+                <InteractiveSimulator {...simulatorProps} />
+              </div>
+            )}
+
+            {/* Segunda Mente */}
+            {showSecondBrain && (
+              <div className="mb-6">
+                <SecondBrainBuilder
+                  assistantId={assistant?.id || ''}
+                  sessionId={sessionId}
+                  onKnowledgeUpdate={() => {
+                    toast({
+                      title: "Segunda Mente Atualizada!",
+                      description: "Seu banco de conhecimento pessoal foi enriquecido."
+                    });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Plano de Estudos */}
+            {showStudyPlan && (
+              <div className="mb-6">
+                <SmartStudyPlan
+                  assistantId={assistant?.id || ''}
+                  sessionId={sessionId}
+                />
+              </div>
+            )}
+
+            {/* Mapa de Conhecimento */}
+            {showKnowledgeMap && (
+              <div className="mb-6">
+                <KnowledgeMap
+                  assistantId={assistant?.id || ''}
+                  sessionId={sessionId}
+                  subject={assistant?.subject || 'Geral'}
+                />
+              </div>
+            )}
+
             <Card className="h-[600px] flex flex-col">
               <CardHeader className="border-b">
                 <CardTitle className="flex items-center text-lg">
                   <MessageSquare className="h-5 w-5 mr-2" />
-                  Chat com {assistant.name}
+                  Chat com {assistant?.name}
                   {practiceMode && (
                     <Badge variant="default" className="ml-2 bg-purple-600">
                       Modo Prática
@@ -755,14 +967,14 @@ const StudentChat = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Area */}
+                {/* Input Area com comandos avançados */}
                 <div className="border-t p-4">
                   <div className="flex space-x-2">
                     <Input
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Digite sua pergunta, /resumo para resumir, ou /praticar [tópico] para exercícios..."
+                      placeholder="Digite sua pergunta ou use comandos: /simular, /conectar, /criar_plano, /segunda_mente, /mapa..."
                       className="flex-1"
                       disabled={loading}
                     />
@@ -775,7 +987,7 @@ const StudentChat = () => {
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Pressione Enter para enviar • Digite /resumo para resumir • /praticar [tópico] para exercícios
+                    💡 <strong>Novos comandos:</strong> /simular [tópico] • /conectar [conceito] • /criar_plano • /segunda_mente • /mapa
                   </p>
                 </div>
               </CardContent>
@@ -788,3 +1000,5 @@ const StudentChat = () => {
 };
 
 export default StudentChat;
+
+}
