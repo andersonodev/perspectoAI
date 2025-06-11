@@ -304,7 +304,7 @@ const StudentChat = () => {
       setMessages(prev => [...prev, assistantMessage]);
 
       // Adicionar tópico ao coach de revisão espaçada automaticamente
-      if (data.response && !isCommand && Math.random() > 0.7) {
+      if (data.response && Math.random() > 0.7) {
         const topic = extractTopicFromResponse(data.response);
         if (topic) {
           addToSpacedRepetition(topic);
@@ -1000,5 +1000,3 @@ const StudentChat = () => {
 };
 
 export default StudentChat;
-
-}

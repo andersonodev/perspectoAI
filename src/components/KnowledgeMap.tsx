@@ -80,39 +80,6 @@ const KnowledgeMap = ({ assistantId, sessionId, subject }: KnowledgeMapProps) =>
           connections: ['células-organelas', 'fotossíntese'],
           position: { x: 400, y: 100 },
           prerequisites: ['células-organelas']
-        },
-        {
-          id: 'fotossíntese',
-          title: 'Fotossíntese',
-          category: 'Bioquímica',
-          level: 'advanced',
-          mastery: 0,
-          unlocked: false,
-          connections: ['respiração-celular'],
-          position: { x: 550, y: 100 },
-          prerequisites: ['respiração-celular']
-        },
-        {
-          id: 'tecidos',
-          title: 'Tecidos',
-          category: 'Histologia',
-          level: 'intermediate',
-          mastery: 30,
-          unlocked: true,
-          connections: ['tipos-células', 'órgãos'],
-          position: { x: 400, y: 250 },
-          prerequisites: ['tipos-células']
-        },
-        {
-          id: 'órgãos',
-          title: 'Órgãos e Sistemas',
-          category: 'Anatomia',
-          level: 'advanced',
-          mastery: 0,
-          unlocked: false,
-          connections: ['tecidos'],
-          position: { x: 550, y: 250 },
-          prerequisites: ['tecidos']
         }
       ],
       'Matemática': [
@@ -137,50 +104,6 @@ const KnowledgeMap = ({ assistantId, sessionId, subject }: KnowledgeMapProps) =>
           connections: ['números-naturais', 'números-racionais'],
           position: { x: 250, y: 200 },
           prerequisites: ['números-naturais']
-        },
-        {
-          id: 'números-racionais',
-          title: 'Números Racionais',
-          category: 'Aritmética',
-          level: 'intermediate',
-          mastery: 55,
-          unlocked: true,
-          connections: ['números-inteiros', 'equações-1grau'],
-          position: { x: 400, y: 200 },
-          prerequisites: ['números-inteiros']
-        },
-        {
-          id: 'equações-1grau',
-          title: 'Equações 1º Grau',
-          category: 'Álgebra',
-          level: 'intermediate',
-          mastery: 40,
-          unlocked: true,
-          connections: ['números-racionais', 'equações-2grau'],
-          position: { x: 400, y: 100 },
-          prerequisites: ['números-racionais']
-        },
-        {
-          id: 'equações-2grau',
-          title: 'Equações 2º Grau',
-          category: 'Álgebra',
-          level: 'advanced',
-          mastery: 10,
-          unlocked: false,
-          connections: ['equações-1grau', 'funções'],
-          position: { x: 550, y: 100 },
-          prerequisites: ['equações-1grau']
-        },
-        {
-          id: 'funções',
-          title: 'Funções',
-          category: 'Álgebra',
-          level: 'advanced',
-          mastery: 0,
-          unlocked: false,
-          connections: ['equações-2grau'],
-          position: { x: 700, y: 100 },
-          prerequisites: ['equações-2grau']
         }
       ]
     };
@@ -201,30 +124,13 @@ const KnowledgeMap = ({ assistantId, sessionId, subject }: KnowledgeMapProps) =>
         // Verificar se deve desbloquear nós dependentes
         if (newMastery >= 70) {
           // Desbloquear nós que dependem deste
-          return updateDependentNodes(prev, nodeId);
+          return updatedNode;
         }
         
         return updatedNode;
       }
       return node;
     }));
-  };
-
-  const updateDependentNodes = (currentNodes: KnowledgeNode[], unlockedNodeId: string) => {
-    return currentNodes.map(node => {
-      if (node.prerequisites.includes(unlockedNodeId) && !node.unlocked) {
-        // Verificar se todos os pré-requisitos estão completos
-        const allPrereqsMet = node.prerequisites.every(prereqId => {
-          const prereqNode = currentNodes.find(n => n.id === prereqId);
-          return prereqNode && prereqNode.mastery >= 70;
-        });
-        
-        if (allPrereqsMet) {
-          return { ...node, unlocked: true };
-        }
-      }
-      return node;
-    });
   };
 
   const getMasteryColor = (mastery: number) => {
@@ -307,30 +213,6 @@ const KnowledgeMap = ({ assistantId, sessionId, subject }: KnowledgeMapProps) =>
                     ) : (
                       <Lock className="h-6 w-6 text-white" />
                     )}
-                    
-                    {/* Barra de progresso circular */}
-                    {node.unlocked && (
-                      <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="28"
-                          fill="none"
-                          stroke="rgba(255,255,255,0.3)"
-                          strokeWidth="4"
-                        />
-                        <circle
-                          cx="50%"
-                          cy="50%"
-                          r="28"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="4"
-                          strokeDasharray={`${(node.mastery / 100) * 175.929} 175.929`}
-                          className="transition-all duration-500"
-                        />
-                      </svg>
-                    )}
                   </div>
                   
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1">
@@ -372,25 +254,6 @@ const KnowledgeMap = ({ assistantId, sessionId, subject }: KnowledgeMapProps) =>
                     <Progress value={selectedNode.mastery} className="h-2" />
                   </div>
 
-                  {selectedNode.prerequisites.length > 0 && (
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Pré-requisitos:</h4>
-                      <div className="space-y-1">
-                        {selectedNode.prerequisites.map(prereqId => {
-                          const prereqNode = nodes.find(n => n.id === prereqId);
-                          if (!prereqNode) return null;
-                          
-                          return (
-                            <div key={prereqId} className="flex items-center space-x-2 text-sm">
-                              <span className={prereqNode.mastery >= 70 ? '✅' : '❌'}</span>
-                              <span>{prereqNode.title}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
                   <div className="space-y-2">
                     <Button 
                       size="sm" 
@@ -430,7 +293,7 @@ const KnowledgeMap = ({ assistantId, sessionId, subject }: KnowledgeMapProps) =>
                   <span className="font-medium">{nodes.filter(n => n.unlocked).length}/{nodes.length}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tópicos dominados (>80%):</span>
+                  <span>Tópicos dominados (mais de 80%):</span>
                   <span className="font-medium">{nodes.filter(n => n.mastery >= 80).length}</span>
                 </div>
                 <div className="flex justify-between text-sm">

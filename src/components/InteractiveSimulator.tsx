@@ -55,7 +55,6 @@ const InteractiveSimulator = ({ type, topic, description, onClose }: SimulationP
 
         <div className="bg-blue-50 p-4 rounded-lg">
           <div className="relative h-40 bg-gradient-to-b from-blue-100 to-green-100 rounded border-2">
-            {/* Simulação visual simples da trajetória */}
             <div 
               className="absolute bottom-0 left-4 w-2 h-2 bg-red-600 rounded-full"
               style={{
@@ -220,7 +219,7 @@ const InteractiveSimulator = ({ type, topic, description, onClose }: SimulationP
               </div>
             </div>
           ) : (
-            <p className="font-medium text-red-700">✗ A equação não tem raízes reais (Δ < 0)</p>
+            <p className="font-medium text-red-700">✗ A equação não tem raízes reais (Δ menor que 0)</p>
           )}
         </div>
       </div>
