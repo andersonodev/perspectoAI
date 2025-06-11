@@ -14,7 +14,7 @@ interface KnowledgeUploadProps {
 }
 
 const KnowledgeUpload = ({ assistantId }: KnowledgeUploadProps) => {
-  const { addKnowledge } = useKnowledge();
+  const { addKnowledge } = useKnowledge(assistantId);
   const [uploadType, setUploadType] = useState<'file' | 'text' | 'url'>('file');
   const [loading, setLoading] = useState(false);
   const [textContent, setTextContent] = useState('');
@@ -46,7 +46,6 @@ const KnowledgeUpload = ({ assistantId }: KnowledgeUploadProps) => {
       const { content } = await response.json();
 
       await addKnowledge({
-        assistant_id: assistantId,
         content_type: 'file',
         title: file.name,
         content: content,
@@ -90,7 +89,6 @@ const KnowledgeUpload = ({ assistantId }: KnowledgeUploadProps) => {
     setLoading(true);
     try {
       await addKnowledge({
-        assistant_id: assistantId,
         content_type: 'text',
         title: textTitle,
         content: textContent,
