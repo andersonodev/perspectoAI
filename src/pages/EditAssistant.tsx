@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAssistants } from '@/hooks/useAssistants';
@@ -14,6 +13,7 @@ import { ArrowLeft, Save, Settings, FileText, Shield, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import KnowledgeUpload from '@/components/KnowledgeUpload';
 import AIControlSettings from '@/components/AIControlSettings';
+import MultipleKnowledgeUpload from '@/components/MultipleKnowledgeUpload';
 
 interface Assistant {
   id: string;
@@ -278,7 +278,30 @@ const EditAssistant = () => {
 
           {/* Base de Conhecimento */}
           <TabsContent value="knowledge">
-            <KnowledgeUpload assistantId={assistant.id} />
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Base de Conhecimento Atual</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <KnowledgeUpload assistantId={assistant.id} />
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Adicionar Múltiplas Fontes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <MultipleKnowledgeUpload
+                    onKnowledgeChange={(sources) => {
+                      // TODO: Implementar processamento de múltiplas fontes para assistentes existentes
+                      console.log('New sources to add:', sources);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Preview */}
