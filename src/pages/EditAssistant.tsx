@@ -2,79 +2,136 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAssistants } from '@/hooks/useAssistants';
-import { useKnowledge } from '@/hooks/useKnowledge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Upload, FileText, Trash2, Plus, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Save, Settings, FileText, Shield, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import KnowledgeUpload from '@/components/KnowledgeUpload';
+import AIControlSettings from '@/components/AIControlSettings';
+
+interface Assistant {
+  id: string;
+  name: string;
+  subject: string;
+  personality: 'friendly' | 'formal' | 'socratic' | 'creative';
+  welcome_message: string | null;
+  is_published: boolean;
+  guardrails: {
+    instructions?: string;
+    creativityLevel?: number;
+    citationMode?: boolean;
+    antiCheatMode?: boolean;
+    transparencyMode?: boolean;
+  };
+}
 
 const EditAssistant = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { assistants, updateAssistant, loading: assistantsLoading } = useAssistants();
-  const { knowledge, uploadPDF, addKnowledge, deleteKnowledge, loading: knowledgeLoading } = useKnowledge(id || '');
-  
-  const [assistant, setAssistant] = useState<any>(null);
-  const [textKnowledge, setTextKnowledge] = useState('');
-  const [textTitle, setTextTitle] = useState('');
+  const { assistants, updateAssistant } = useAssistants();
+  const [assistant, setAssistant] = useState<Assistant | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    subject: '',
+    personality: 'friendly' as const,
+    welcome_message: '',
+    instructions: '',
+    is_published: false
+  });
+  const [aiSettings, setAiSettings] = useState({
+    creativityLevel: 50,
+    citationMode: true,
+    antiCheatMode: true,
+    transparencyMode: true
+  });
 
   useEffect(() => {
-    if (assistants && id) {
-      const found = assistants.find(a => a.id === id);
-      if (found) {
-        setAssistant(found);
+    if (id && assistants.length > 0) {
+      const foundAssistant = assistants.find(a => a.id === id);
+      if (foundAssistant) {
+        setAssistant(foundAssistant);
+        setFormData({
+          name: foundAssistant.name,
+          subject: foundAssistant.subject,
+          personality: foundAssistant.personality,
+          welcome_message: foundAssistant.welcome_message || '',
+          instructions: foundAssistant.guardrails?.instructions || '',
+          is_published: foundAssistant.is_published
+        });
+        setAiSettings({
+          creativityLevel: foundAssistant.guardrails?.creativityLevel || 50,
+          citationMode: foundAssistant.guardrails?.citationMode || true,
+          antiCheatMode: foundAssistant.guardrails?.antiCheatMode || true,
+          transparencyMode: foundAssistant.guardrails?.transparencyMode || true
+        });
       }
     }
-  }, [assistants, id]);
+  }, [id, assistants]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
-    if (file.type !== 'application/pdf') {
+  const handleAISettingsChange = (newSettings: typeof aiSettings) => {
+    setAiSettings(newSettings);
+  };
+
+  const handleSubmit = async () => {
+    if (!assistant) return;
+
+    if (!formData.name || !formData.subject) {
       toast({
-        title: "Erro",
-        description: "Apenas arquivos PDF são suportados.",
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha nome e matéria.",
         variant: "destructive"
       });
       return;
     }
 
-    await uploadPDF(file);
-    event.target.value = '';
-  };
+    setLoading(true);
+    try {
+      const updateData = {
+        name: formData.name,
+        subject: formData.subject,
+        personality: formData.personality,
+        welcome_message: formData.welcome_message || `Olá! Sou ${formData.name}, seu assistente de ${formData.subject}. Como posso ajudá-lo hoje?`,
+        is_published: formData.is_published,
+        guardrails: {
+          instructions: formData.instructions,
+          creativityLevel: aiSettings.creativityLevel,
+          citationMode: aiSettings.citationMode,
+          antiCheatMode: aiSettings.antiCheatMode,
+          transparencyMode: aiSettings.transparencyMode,
+          behavior: `Atue como um assistente especializado em ${formData.subject} com personalidade ${formData.personality}. ${formData.instructions}`
+        }
+      };
 
-  const handleAddTextKnowledge = async () => {
-    if (!textTitle.trim() || !textKnowledge.trim()) {
+      await updateAssistant(assistant.id, updateData);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Assistente atualizado com sucesso."
+      });
+    } catch (error) {
+      console.error('Error updating assistant:', error);
       toast({
         title: "Erro",
-        description: "Título e conteúdo são obrigatórios.",
+        description: "Não foi possível atualizar o assistente.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    await addKnowledge({
-      content_type: 'text',
-      title: textTitle,
-      content: textKnowledge
-    });
-
-    setTextTitle('');
-    setTextKnowledge('');
   };
 
-  const handleUpdateAssistant = async (updates: any) => {
-    if (!id) return;
-    await updateAssistant(id, updates);
-  };
-
-  if (assistantsLoading || !assistant) {
+  if (!assistant) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -85,168 +142,125 @@ const EditAssistant = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Editando: {assistant.name}
-            </h1>
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/dashboard')}
+                className="mr-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Editar: {assistant.name}
+              </h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={formData.is_published}
+                onCheckedChange={(checked) => handleInputChange('is_published', checked)}
+              />
+              <Label className="text-sm">Publicado</Label>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="knowledge" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="knowledge">Conhecimento</TabsTrigger>
-            <TabsTrigger value="settings">Configurações</TabsTrigger>
-            <TabsTrigger value="test">Testar</TabsTrigger>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <Tabs defaultValue="basic" className="space-y-6">
+          <TabsList className="grid grid-cols-4 w-full max-w-md">
+            <TabsTrigger value="basic" className="flex items-center">
+              <Settings className="h-4 w-4 mr-1" />
+              Básico
+            </TabsTrigger>
+            <TabsTrigger value="ai-control" className="flex items-center">
+              <Shield className="h-4 w-4 mr-1" />
+              IA
+            </TabsTrigger>
+            <TabsTrigger value="knowledge" className="flex items-center">
+              <FileText className="h-4 w-4 mr-1" />
+              Base
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center">
+              <Eye className="h-4 w-4 mr-1" />
+              Preview
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="knowledge" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Upload PDF */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Upload className="h-5 w-5 mr-2" />
-                    Upload de PDF
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
-                      Faça upload de PDFs com o material da sua aula. O conteúdo será extraído e usado pelo assistente.
-                    </p>
-                    <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                          <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Clique para fazer upload</span>
-                          </p>
-                          <p className="text-xs text-gray-500">PDF (MAX. 10MB)</p>
-                        </div>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept=".pdf"
-                          onChange={handleFileUpload}
-                          disabled={knowledgeLoading}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Add Text Knowledge */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Plus className="h-5 w-5 mr-2" />
-                    Adicionar Texto
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+          {/* Configurações Básicas */}
+          <TabsContent value="basic">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações Básicas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="textTitle">Título</Label>
+                      <Label htmlFor="name">Nome do Assistente *</Label>
                       <Input
-                        id="textTitle"
-                        value={textTitle}
-                        onChange={(e) => setTextTitle(e.target.value)}
-                        placeholder="Ex: Capítulo 1 - Introdução"
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Ex: Professor Carlos"
                       />
                     </div>
+
                     <div>
-                      <Label htmlFor="textContent">Conteúdo</Label>
-                      <Textarea
-                        id="textContent"
-                        value={textKnowledge}
-                        onChange={(e) => setTextKnowledge(e.target.value)}
-                        placeholder="Cole aqui o texto do material..."
-                        rows={6}
+                      <Label htmlFor="subject">Matéria/Área *</Label>
+                      <Input
+                        id="subject"
+                        value={formData.subject}
+                        onChange={(e) => handleInputChange('subject', e.target.value)}
+                        placeholder="Ex: Matemática, História, Programação"
                       />
                     </div>
-                    <Button onClick={handleAddTextKnowledge} className="w-full">
-                      Adicionar Conhecimento
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
-            {/* Knowledge List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Material Adicionado ({knowledge.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {knowledge.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">
-                    Nenhum material adicionado ainda. Faça upload de PDFs ou adicione texto acima.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {knowledge.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                    <div>
+                      <Label htmlFor="personality">Personalidade</Label>
+                      <Select 
+                        value={formData.personality} 
+                        onValueChange={(value: any) => handleInputChange('personality', value)}
                       >
-                        <div className="flex items-center space-x-3">
-                          <FileText className="h-5 w-5 text-blue-600" />
-                          <div>
-                            <h4 className="font-medium">{item.title}</h4>
-                            <p className="text-sm text-gray-600">
-                              {item.content_type === 'file' ? 'PDF' : 'Texto'} • {new Date(item.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteKnowledge(item.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="friendly">Amigável - Caloroso e acessível</SelectItem>
+                          <SelectItem value="formal">Formal - Profissional e direto</SelectItem>
+                          <SelectItem value="socratic">Socrático - Ensina através de perguntas</SelectItem>
+                          <SelectItem value="creative">Criativo - Usa analogias e exemplos divertidos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações do Assistente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Status</Label>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant={assistant.is_published ? "default" : "secondary"}>
-                        {assistant.is_published ? "Publicado" : "Rascunho"}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUpdateAssistant({ is_published: !assistant.is_published })}
-                      >
-                        {assistant.is_published ? "Despublicar" : "Publicar"}
-                      </Button>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="welcome_message">Mensagem de Boas-vindas</Label>
+                      <Textarea
+                        id="welcome_message"
+                        value={formData.welcome_message}
+                        onChange={(e) => handleInputChange('welcome_message', e.target.value)}
+                        placeholder="Como o assistente irá cumprimentar os alunos..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="instructions">Instruções Especiais</Label>
+                      <Textarea
+                        id="instructions"
+                        value={formData.instructions}
+                        onChange={(e) => handleInputChange('instructions', e.target.value)}
+                        placeholder="Instruções específicas sobre como o assistente deve se comportar..."
+                        rows={5}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Ex: "Sempre cite as fontes", "Peça para o aluno explicar com suas palavras", etc.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -254,26 +268,84 @@ const EditAssistant = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="test">
+          {/* Controle da IA */}
+          <TabsContent value="ai-control">
+            <AIControlSettings
+              settings={aiSettings}
+              onSettingsChange={handleAISettingsChange}
+            />
+          </TabsContent>
+
+          {/* Base de Conhecimento */}
+          <TabsContent value="knowledge">
+            <KnowledgeUpload assistantId={assistant.id} />
+          </TabsContent>
+
+          {/* Preview */}
+          <TabsContent value="preview">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  Testar Assistente
-                </CardTitle>
+                <CardTitle>Preview do Assistente</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Em breve você poderá testar seu assistente aqui antes de publicá-lo.
-                </p>
-                <Button disabled className="w-full">
-                  Chat de Teste (Em desenvolvimento)
-                </Button>
+                <div className="border rounded-lg p-4 bg-white space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Settings className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{formData.name || 'Nome do Assistente'}</h3>
+                      <p className="text-sm text-gray-600">Especialista em {formData.subject || 'Sua Matéria'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-100 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700">
+                      {formData.welcome_message || `Olá! Sou ${formData.name || 'seu assistente'}, especializado em ${formData.subject || 'sua matéria'}. Como posso ajudá-lo hoje?`}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                      {formData.personality === 'friendly' && 'Amigável'}
+                      {formData.personality === 'formal' && 'Formal'}
+                      {formData.personality === 'socratic' && 'Socrático'}
+                      {formData.personality === 'creative' && 'Criativo'}
+                    </span>
+                    {aiSettings.citationMode && (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                        Cita fontes
+                      </span>
+                    )}
+                    {aiSettings.antiCheatMode && (
+                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">
+                        Anti-cola
+                      </span>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+
+        {/* Botão de Salvar */}
+        <div className="flex justify-end mt-8">
+          <Button onClick={handleSubmit} disabled={loading} size="lg">
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Alterações
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,7 @@ import CreateAssistant from "./pages/CreateAssistant";
 import EditAssistant from "./pages/EditAssistant";
 import StudentChat from "./pages/StudentChat";
 import AssistantAnalytics from "./pages/AssistantAnalytics";
+import Transparency from "./pages/Transparency";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +67,7 @@ const AppRoutes = () => {
           <Auth />
         </PublicRoute>
       } />
+      <Route path="/transparency" element={<Transparency />} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />

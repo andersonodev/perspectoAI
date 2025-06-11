@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, MessageSquare, ThumbsUp, ThumbsDown, Download, RotateCcw, Gamepad2 } from 'lucide-react';
+import { Send, Bot, User, MessageSquare, ThumbsUp, ThumbsDown, Download, RotateCcw, Gamepad2, FileText, Bookmark } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import LearningProfile from '@/components/LearningProfile';
 import AdaptiveLearningPaths from '@/components/AdaptiveLearningPaths';
+import AdvancedExport from '@/components/AdvancedExport';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -17,6 +17,8 @@ interface Message {
   timestamp: Date;
   feedback?: number;
   suggestions?: string[];
+  citations?: string[];
+  reasoning?: string;
 }
 
 interface Assistant {
@@ -26,6 +28,12 @@ interface Assistant {
   personality: string;
   welcome_message: string | null;
   is_published: boolean;
+  guardrails: {
+    creativityLevel?: number;
+    citationMode?: boolean;
+    antiCheatMode?: boolean;
+    transparencyMode?: boolean;
+  };
 }
 
 const StudentChat = () => {
@@ -38,6 +46,7 @@ const StudentChat = () => {
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
   const [showProfile, setShowProfile] = useState(false);
   const [showPaths, setShowPaths] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [practiceMode, setPracticeMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +89,6 @@ const StudentChat = () => {
 
       setAssistant(data);
       
-      // Add welcome message if not already loaded from history
       if (data.welcome_message && messages.length === 0) {
         const welcomeMessage: Message = {
           role: 'assistant',
@@ -135,7 +143,6 @@ const StudentChat = () => {
     const historyKey = `chat_history_${id}`;
     localStorage.removeItem(historyKey);
     
-    // Reset to welcome message only
     if (assistant?.welcome_message) {
       const welcomeMessage: Message = {
         role: 'assistant',
@@ -154,9 +161,43 @@ const StudentChat = () => {
     });
   };
 
+  const detectCheatAttempt = (message: string): boolean => {
+    if (!assistant?.guardrails?.antiCheatMode) return false;
+    
+    // Detectar padrões de questões de prova
+    const cheatPatterns = [
+      /questão \d+/i,
+      /alternativa [a-e]/i,
+      /verdadeiro ou falso/i,
+      /complete a frase/i,
+      /resolva o exercício/i,
+      /resposta da prova/i
+    ];
+    
+    return cheatPatterns.some(pattern => pattern.test(message));
+  };
+
   const sendMessage = async (messageText?: string) => {
     const textToSend = messageText || inputMessage;
     if (!textToSend.trim() || !assistant || loading) return;
+
+    // Detectar tentativa de cola
+    if (detectCheatAttempt(textToSend)) {
+      const antiCheatMessage: Message = {
+        role: 'assistant',
+        content: "🎓 Percebi que esta parece ser uma questão de avaliação. Seria mais produtivo para o seu aprendizado se explorássemos juntos o conceito por trás dela. Qual parte do tópico você gostaria de revisar para resolver essa questão sozinho?",
+        timestamp: new Date(),
+        suggestions: [
+          'Vamos revisar os conceitos básicos',
+          'Preciso entender a teoria primeiro',
+          'Pode me dar dicas para resolver sozinho?'
+        ]
+      };
+      
+      setMessages(prev => [...prev, antiCheatMessage]);
+      setInputMessage('');
+      return;
+    }
 
     // Handle special commands
     if (textToSend === '/resumo') {
@@ -192,8 +233,8 @@ const StudentChat = () => {
             role: m.role,
             content: m.content
           })),
+          assistantSettings: assistant.guardrails,
           learningProfile: {
-            // This would be dynamically determined based on conversation analysis
             style: 'adaptive',
             pace: 'medium',
             preferences: ['examples', 'analogies']
@@ -207,20 +248,19 @@ const StudentChat = () => {
         role: 'assistant',
         content: data.response || 'Desculpe, não consegui processar sua mensagem.',
         timestamp: new Date(),
-        suggestions: data.suggestions || []
+        suggestions: data.suggestions || [],
+        citations: data.citations || [],
+        reasoning: data.reasoning || ''
       };
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Track analytics
       trackAnalytics();
 
-      // Check for knowledge gaps
       if (data.response?.includes('não sei') || data.response?.includes('não tenho informação')) {
         trackKnowledgeGap(textToSend);
       }
 
-      // Show learning paths after significant interaction
       if (messages.length > 4 && Math.random() > 0.7) {
         setShowPaths(true);
       }
@@ -332,7 +372,6 @@ const StudentChat = () => {
           feedback
         });
 
-      // Update local message
       setMessages(prev => prev.map((msg, idx) => 
         idx === messageIndex ? { ...msg, feedback } : msg
       ));
@@ -421,7 +460,6 @@ const StudentChat = () => {
   };
 
   const renderMarkdown = (content: string) => {
-    // Simple markdown rendering for bold, lists, and code blocks
     return content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -480,12 +518,24 @@ const StudentChat = () => {
                 <h1 className="text-xl font-semibold text-gray-900">{assistant.name}</h1>
                 <p className="text-sm text-gray-600">Assistente de {assistant.subject}</p>
               </div>
-              <Badge variant="secondary" className="ml-auto">
-                {assistant.personality === 'friendly' && 'Amigável'}
-                {assistant.personality === 'formal' && 'Formal'}
-                {assistant.personality === 'socratic' && 'Socrático'}
-                {assistant.personality === 'creative' && 'Criativo'}
-              </Badge>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="secondary" className="text-xs">
+                  {assistant.personality === 'friendly' && 'Amigável'}
+                  {assistant.personality === 'formal' && 'Formal'}
+                  {assistant.personality === 'socratic' && 'Socrático'}
+                  {assistant.personality === 'creative' && 'Criativo'}
+                </Badge>
+                {assistant.guardrails?.citationMode && (
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                    Cita fontes
+                  </Badge>
+                )}
+                {assistant.guardrails?.antiCheatMode && (
+                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">
+                    Anti-cola
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -493,12 +543,12 @@ const StudentChat = () => {
                 size="sm"
                 onClick={() => setShowProfile(!showProfile)}
               >
-                Perfil de Aprendizagem
+                Perfil
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={exportConversation}
+                onClick={() => setShowExport(!showExport)}
                 disabled={messages.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -534,8 +584,15 @@ const StudentChat = () => {
                 onSelectPath={handlePathSelection}
               />
             )}
+
+            {showExport && (
+              <AdvancedExport
+                messages={messages}
+                assistantName={assistant.name}
+                subject={assistant.subject}
+              />
+            )}
             
-            {/* Practice Mode Toggle */}
             <Card>
               <CardContent className="p-4">
                 <Button
@@ -608,6 +665,24 @@ const StudentChat = () => {
                               {message.timestamp.toLocaleTimeString()}
                             </p>
                           </div>
+
+                          {/* Citations */}
+                          {message.citations && message.citations.length > 0 && (
+                            <div className="bg-blue-50 p-2 rounded text-xs">
+                              <p className="font-medium text-blue-900 mb-1">📚 Fontes:</p>
+                              {message.citations.map((citation, idx) => (
+                                <p key={idx} className="text-blue-700">• {citation}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Reasoning (Transparency Mode) */}
+                          {assistant.guardrails?.transparencyMode && message.reasoning && (
+                            <div className="bg-yellow-50 p-2 rounded text-xs">
+                              <p className="font-medium text-yellow-900 mb-1">🤔 Como cheguei a esta resposta:</p>
+                              <p className="text-yellow-800">{message.reasoning}</p>
+                            </div>
+                          )}
                           
                           {/* Feedback buttons for assistant messages */}
                           {message.role === 'assistant' && (

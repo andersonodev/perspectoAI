@@ -19,13 +19,14 @@ serve(async (req) => {
       assistantId, 
       sessionId, 
       conversationHistory = [],
+      assistantSettings = {},
       learningProfile = null,
       isCommand = false,
       isPracticeMode = false,
       isActivityGeneration = false 
     } = await req.json();
 
-    console.log('Processing request:', { message, assistantId, sessionId, isCommand, isPracticeMode, isActivityGeneration });
+    console.log('Processing request:', { message, assistantId, sessionId, assistantSettings });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -57,9 +58,38 @@ serve(async (req) => {
     // Build context from knowledge base
     const knowledgeContext = knowledge?.map(k => `${k.title}: ${k.content}`).join('\n\n') || '';
 
-    // Build adaptive personality prompt based on learning profile
+    // Get AI control settings
+    const creativityLevel = assistantSettings.creativityLevel || 50;
+    const citationMode = assistantSettings.citationMode || false;
+    const transparencyMode = assistantSettings.transparencyMode || false;
+
+    // Build adaptive personality prompt
     let personalityPrompt = `Você é ${assistant.name}, um assistente de IA especializado em ${assistant.subject}.`;
     
+    // Apply creativity level settings
+    if (creativityLevel <= 30) {
+      personalityPrompt += `
+      MODO GUARDIÃO DO CONTEÚDO:
+      - Atenha-se ESTRITAMENTE ao material fornecido na base de conhecimento
+      - Se a informação não estiver no material, diga claramente: "Com base no material fornecido, essa informação não está disponível"
+      - Nunca invente ou extrapolе informações
+      - Cite sempre a fonte específica do material`;
+    } else if (creativityLevel > 70) {
+      personalityPrompt += `
+      MODO PARCEIRO DE IDEIAS:
+      - Use o material fornecido como base, mas pode criar analogias criativas
+      - Conecte ideias usando conhecimento geral para enriquecer o aprendizado
+      - Crie exemplos novos e metáforas que ajudem na compreensão
+      - Seja criativo mas sempre mantenha a precisão acadêmica`;
+    } else {
+      personalityPrompt += `
+      MODO EQUILIBRADO:
+      - Use principalmente o material fornecido
+      - Pode criar analogias simples e exemplos baseados no conteúdo
+      - Mantenha um equilíbrio entre precisão e criatividade`;
+    }
+
+    // Apply personality traits
     if (assistant.personality === 'friendly') {
       personalityPrompt += ' Seja caloroso, encorajador e use linguagem acessível.';
     } else if (assistant.personality === 'formal') {
@@ -68,6 +98,25 @@ serve(async (req) => {
       personalityPrompt += ' Use o método socrático, fazendo perguntas que guiem o aluno ao entendimento.';
     } else if (assistant.personality === 'creative') {
       personalityPrompt += ' Use analogias criativas, metáforas e exemplos divertidos.';
+    }
+
+    // Add citation requirements
+    if (citationMode) {
+      personalityPrompt += `
+      CITAÇÃO OBRIGATÓRIA:
+      - Para cada informação específica, adicione uma citação entre parênteses
+      - Formato: (Fonte: [nome do documento], página/seção [X])
+      - Se usar múltiplas fontes, liste todas
+      - Torne as citações discretas mas visíveis`;
+    }
+
+    // Add transparency mode
+    if (transparencyMode) {
+      personalityPrompt += `
+      MODO TRANSPARÊNCIA:
+      - Ao final de cada resposta complexa, explique brevemente seu raciocínio
+      - Use uma seção "🤔 Como cheguei a esta resposta:" 
+      - Seja claro sobre quais fontes usou e como conectou as informações`;
     }
 
     // Adaptive learning enhancements
@@ -150,7 +199,7 @@ ${historyText}`;
           }
         ],
         generationConfig: {
-          temperature: 0.7,
+          temperature: creativityLevel > 50 ? 0.8 : 0.4, // Adjust temperature based on creativity level
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 2048,
@@ -172,6 +221,26 @@ ${historyText}`;
     }
 
     const aiResponse = data.candidates[0].content.parts[0].text;
+
+    // Extract citations if citation mode is enabled
+    let citations: string[] = [];
+    let reasoning = '';
+
+    if (citationMode) {
+      const citationRegex = /\(Fonte: ([^)]+)\)/g;
+      let match;
+      while ((match = citationRegex.exec(aiResponse)) !== null) {
+        citations.push(match[1]);
+      }
+    }
+
+    // Extract reasoning if transparency mode is enabled
+    if (transparencyMode) {
+      const reasoningMatch = aiResponse.match(/🤔 Como cheguei a esta resposta:\s*(.+?)(?=\n\n|\n$|$)/s);
+      if (reasoningMatch) {
+        reasoning = reasoningMatch[1].trim();
+      }
+    }
 
     // Generate intelligent suggestions based on the response and context
     let suggestions: string[] = [];
@@ -223,7 +292,9 @@ ${historyText}`;
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
-        suggestions: suggestions.slice(0, 3) // Limit to 3 suggestions
+        suggestions: suggestions.slice(0, 3),
+        citations: citations,
+        reasoning: reasoning
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
