@@ -40,7 +40,7 @@ const EditAssistant = () => {
   const [formData, setFormData] = useState({
     name: '',
     subject: '',
-    personality: 'friendly' as const,
+    personality: 'friendly' as 'friendly' | 'formal' | 'socratic' | 'creative',
     welcome_message: '',
     instructions: '',
     is_published: false
@@ -222,7 +222,7 @@ const EditAssistant = () => {
                       <Label htmlFor="personality">Personalidade</Label>
                       <Select 
                         value={formData.personality} 
-                        onValueChange={(value: any) => handleInputChange('personality', value)}
+                        onValueChange={(value: 'friendly' | 'formal' | 'socratic' | 'creative') => handleInputChange('personality', value)}
                       >
                         <SelectTrigger>
                           <SelectValue />

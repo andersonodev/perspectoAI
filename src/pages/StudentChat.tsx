@@ -87,7 +87,13 @@ const StudentChat = () => {
         throw error;
       }
 
-      setAssistant(data);
+      // Properly cast the guardrails from Json to our expected type
+      const typedAssistant: Assistant = {
+        ...data,
+        guardrails: (data.guardrails as any) || {}
+      };
+
+      setAssistant(typedAssistant);
       
       if (data.welcome_message && messages.length === 0) {
         const welcomeMessage: Message = {
