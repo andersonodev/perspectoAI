@@ -226,6 +226,94 @@ export type Database = {
           },
         ]
       }
+      personal_knowledge: {
+        Row: {
+          assistant_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          session_id: string
+          source: string
+          tags: string[] | null
+          title: string
+          type: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          session_id: string
+          source: string
+          tags?: string[] | null
+          title: string
+          type: string
+        }
+        Update: {
+          assistant_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          session_id?: string
+          source?: string
+          tags?: string[] | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_knowledge_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spaced_repetition_items: {
+        Row: {
+          assistant_id: string | null
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          last_reviewed: string | null
+          next_review: string
+          session_id: string
+          streak: number | null
+          topic: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          last_reviewed?: string | null
+          next_review: string
+          session_id: string
+          streak?: number | null
+          topic: string
+        }
+        Update: {
+          assistant_id?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          last_reviewed?: string | null
+          next_review?: string
+          session_id?: string
+          streak?: number | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaced_repetition_items_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_conversations: {
         Row: {
           assistant_id: string
@@ -260,6 +348,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "student_conversations_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_assistants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_plans: {
+        Row: {
+          assistant_id: string | null
+          chapters: string[]
+          completed_hours: number | null
+          created_at: string | null
+          exam_date: string
+          id: string
+          session_id: string
+          subject: string
+          tasks: Json
+          total_estimated_hours: number | null
+        }
+        Insert: {
+          assistant_id?: string | null
+          chapters: string[]
+          completed_hours?: number | null
+          created_at?: string | null
+          exam_date: string
+          id?: string
+          session_id: string
+          subject: string
+          tasks?: Json
+          total_estimated_hours?: number | null
+        }
+        Update: {
+          assistant_id?: string | null
+          chapters?: string[]
+          completed_hours?: number | null
+          created_at?: string | null
+          exam_date?: string
+          id?: string
+          session_id?: string
+          subject?: string
+          tasks?: Json
+          total_estimated_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_plans_assistant_id_fkey"
             columns: ["assistant_id"]
             isOneToOne: false
             referencedRelation: "ai_assistants"

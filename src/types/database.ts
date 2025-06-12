@@ -44,6 +44,44 @@ export interface StudentConversation {
   created_at: string;
 }
 
+// New types for advanced learning features
+export interface SpacedRepetitionItem {
+  id: string;
+  assistant_id: string;
+  session_id: string;
+  topic: string;
+  last_reviewed: string;
+  next_review: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  streak: number;
+  created_at: string;
+}
+
+export interface PersonalKnowledge {
+  id: string;
+  assistant_id: string;
+  session_id: string;
+  title: string;
+  type: 'note' | 'image' | 'link' | 'file';
+  content: string;
+  source: string;
+  tags: string[];
+  created_at: string;
+}
+
+export interface StudyPlan {
+  id: string;
+  assistant_id: string;
+  session_id: string;
+  subject: string;
+  exam_date: string;
+  chapters: string[];
+  tasks: any; // JSON data
+  total_estimated_hours: number;
+  completed_hours: number;
+  created_at: string;
+}
+
 export interface CreateAssistantRequest {
   name: string;
   subject: string;

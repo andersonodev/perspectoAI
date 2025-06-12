@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, CheckCircle, Target, BookOpen, CalendarPlus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { StudyPlan as DBStudyPlan } from '@/types/database';
 
 interface StudyTask {
   id: string;
@@ -53,7 +54,7 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
 
   const loadStudyPlans = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('study_plans')
         .select('*')
         .eq('assistant_id', assistantId)
@@ -61,10 +62,14 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
 
       if (error) throw error;
 
-      const plans = (data || []).map(plan => ({
-        ...plan,
+      const plans = (data || []).map((plan: DBStudyPlan) => ({
+        id: plan.id,
         examDate: new Date(plan.exam_date),
-        tasks: JSON.parse(plan.tasks || '[]').map((task: any) => ({
+        subject: plan.subject,
+        chapters: plan.chapters,
+        totalEstimatedHours: plan.total_estimated_hours || 0,
+        completedHours: plan.completed_hours || 0,
+        tasks: JSON.parse(plan.tasks as string || '[]').map((task: any) => ({
           ...task,
           dueDate: new Date(task.dueDate)
         }))
@@ -98,10 +103,9 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
       }
 
       const chapters = newPlan.chapters.split(',').map(c => c.trim()).filter(Boolean);
-      const totalStudyHours = chapters.length * 3; // 3 horas por capítulo (estimativa)
-      const availableStudyDays = Math.max(1, daysUntilExam - 1); // Deixa o último dia para revisão
+      const totalStudyHours = chapters.length * 3;
+      const availableStudyDays = Math.max(1, daysUntilExam - 1);
       
-      // Gerar tarefas distribuídas pelos dias disponíveis
       const tasks: StudyTask[] = [];
       let currentDate = new Date(today);
       
@@ -110,19 +114,17 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         const taskDate = new Date(currentDate);
         taskDate.setDate(currentDate.getDate() + dayOffset);
 
-        // Tarefa de leitura
         tasks.push({
           id: `read-${index}`,
           title: `Ler e resumir ${chapter}`,
           description: `Leitura completa do capítulo com criação de resumo`,
-          estimatedTime: 90, // 1.5 horas
+          estimatedTime: 90,
           completed: false,
           dueDate: taskDate,
           priority: 'high',
           chapter
         });
 
-        // Tarefa de exercícios (no dia seguinte)
         const exerciseDate = new Date(taskDate);
         exerciseDate.setDate(taskDate.getDate() + 1);
         
@@ -130,7 +132,7 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
           id: `exercise-${index}`,
           title: `Exercícios de ${chapter}`,
           description: `Resolver exercícios e problemas do capítulo`,
-          estimatedTime: 60, // 1 hora
+          estimatedTime: 60,
           completed: false,
           dueDate: exerciseDate,
           priority: 'medium',
@@ -138,7 +140,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         });
       });
 
-      // Tarefa de revisão final
       const reviewDate = new Date(examDate);
       reviewDate.setDate(examDate.getDate() - 1);
       
@@ -146,7 +147,7 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         id: 'final-review',
         title: 'Revisão Final',
         description: 'Revisão geral de todos os capítulos e simulado',
-        estimatedTime: 180, // 3 horas
+        estimatedTime: 180,
         completed: false,
         dueDate: reviewDate,
         priority: 'high'
@@ -162,8 +163,7 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         completedHours: 0
       };
 
-      // Salvar no banco
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('study_plans')
         .insert({
           id: studyPlan.id,
@@ -193,18 +193,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         description: `${tasks.length} tarefas foram geradas para otimizar seus estudos.`
       });
 
-      // Sugerir adicionar ao calendário
-      if (navigator.share) {
-        const calendarData = tasks.map(task => 
-          `${task.title} - ${task.dueDate.toLocaleDateString()}`
-        ).join('\n');
-        
-        toast({
-          title: "Dica!",
-          description: "Você pode exportar essas datas para seu calendário."
-        });
-      }
-
     } catch (error) {
       console.error('Error generating study plan:', error);
       toast({
@@ -233,8 +221,7 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         .filter(task => task.completed)
         .reduce((total, task) => total + task.estimatedTime / 60, 0);
 
-      // Atualizar no banco
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('study_plans')
         .update({
           tasks: JSON.stringify(updatedTasks),
@@ -244,7 +231,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
 
       if (error) throw error;
 
-      // Atualizar no estado local
       setStudyPlans(prev => prev.map(p => 
         p.id === planId 
           ? { ...p, tasks: updatedTasks, completedHours }
@@ -297,7 +283,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Criar Novo Plano */}
         <div className="border rounded-lg p-4 space-y-4">
           <h4 className="font-medium">Criar Novo Plano de Estudos</h4>
           
@@ -352,7 +337,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
           </Button>
         </div>
 
-        {/* Planos Existentes */}
         <div className="space-y-4">
           {studyPlans.map(plan => {
             const progressPercentage = (plan.completedHours / plan.totalEstimatedHours) * 100;
@@ -379,7 +363,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Progresso */}
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span>Progresso</span>
@@ -388,7 +371,6 @@ const SmartStudyPlan = ({ assistantId, sessionId }: SmartStudyPlanProps) => {
                     <Progress value={progressPercentage} className="h-2" />
                   </div>
 
-                  {/* Tarefas */}
                   <div className="space-y-2">
                     <h5 className="font-medium">Próximas Tarefas</h5>
                     {plan.tasks

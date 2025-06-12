@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Calendar, Clock, Brain, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Brain, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { SpacedRepetitionItem } from '@/types/database';
 
 interface ReviewItem {
   id: string;
@@ -34,7 +34,8 @@ const SpacedRepetitionCoach = ({ assistantId, sessionId }: SpacedRepetitionCoach
 
   const loadReviewItems = async () => {
     try {
-      const { data, error } = await supabase
+      // Use type assertion to work around TypeScript type issues
+      const { data, error } = await (supabase as any)
         .from('spaced_repetition_items')
         .select('*')
         .eq('assistant_id', assistantId)
@@ -42,10 +43,14 @@ const SpacedRepetitionCoach = ({ assistantId, sessionId }: SpacedRepetitionCoach
 
       if (error) throw error;
 
-      const items = (data || []).map(item => ({
-        ...item,
+      const items = (data || []).map((item: SpacedRepetitionItem) => ({
+        id: item.id,
+        topic: item.topic,
         lastReviewed: new Date(item.last_reviewed),
-        nextReview: new Date(item.next_review)
+        nextReview: new Date(item.next_review),
+        difficulty: item.difficulty,
+        streak: item.streak,
+        assistantId: item.assistant_id
       }));
 
       setReviewItems(items);
@@ -85,7 +90,7 @@ const SpacedRepetitionCoach = ({ assistantId, sessionId }: SpacedRepetitionCoach
       const newStreak = difficulty === 'hard' ? 0 : item.streak + 1;
       const nextReview = calculateNextReview(difficulty, newStreak);
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('spaced_repetition_items')
         .update({
           last_reviewed: new Date().toISOString(),
@@ -112,7 +117,7 @@ const SpacedRepetitionCoach = ({ assistantId, sessionId }: SpacedRepetitionCoach
     try {
       const nextReview = calculateNextReview('medium', 0);
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('spaced_repetition_items')
         .insert({
           assistant_id: assistantId,

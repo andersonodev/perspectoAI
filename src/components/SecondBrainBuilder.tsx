@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Brain, Upload, FileText, Camera, Link, Trash2, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { PersonalKnowledge } from '@/types/database';
 
 interface PersonalKnowledgeItem {
   id: string;
@@ -66,10 +67,8 @@ const SecondBrainBuilder = ({ assistantId, sessionId, onKnowledgeUpdate }: Secon
         type = 'image';
         content = await processImageWithOCR(file);
       } else if (file.type === 'application/pdf') {
-        // Processar PDF
         content = `[Conteúdo do PDF: ${file.name}]\n\nProcessando documento PDF...`;
       } else {
-        // Outros tipos de arquivo
         content = `[Arquivo: ${file.name}]\n\nTipo: ${file.type}`;
       }
 
@@ -108,7 +107,7 @@ const SecondBrainBuilder = ({ assistantId, sessionId, onKnowledgeUpdate }: Secon
 
   const saveKnowledgeItem = async (item: PersonalKnowledgeItem) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('personal_knowledge')
         .insert({
           id: item.id,
@@ -177,7 +176,7 @@ const SecondBrainBuilder = ({ assistantId, sessionId, onKnowledgeUpdate }: Secon
 
   const deleteItem = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('personal_knowledge')
         .delete()
         .eq('id', id);
