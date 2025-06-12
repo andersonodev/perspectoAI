@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -231,8 +232,8 @@ Instruções importantes:
 Histórico da conversa:
 ${historyText}`;
 
-    // Call Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // Call Gemini API with the correct model
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -248,7 +249,7 @@ ${historyText}`;
           }
         ],
         generationConfig: {
-          temperature: creativityLevel > 50 ? 0.8 : 0.4, // Adjust temperature based on creativity level
+          temperature: creativityLevel > 50 ? 0.8 : 0.4,
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 2048,
