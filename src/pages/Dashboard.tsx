@@ -18,20 +18,28 @@ import {
   BarChart3,
   Eye,
   MessageSquare,
-  TrendingUp
+  EyeOff,
+  Globe
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
-  const { assistants, loading, deleteAssistant } = useAssistants();
+  const { assistants, loading, deleteAssistant, updateAssistant } = useAssistants();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const handleDeleteAssistant = async (id: string) => {
     setDeletingId(id);
     await deleteAssistant(id);
     setDeletingId(null);
+  };
+
+  const handleTogglePublish = async (assistant: any) => {
+    setPublishingId(assistant.id);
+    await updateAssistant(assistant.id, { is_published: !assistant.is_published });
+    setPublishingId(null);
   };
 
   const copyShareLink = (assistantId: string) => {
@@ -49,28 +57,33 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Brain className="h-6 w-6 text-blue-600 mr-2" />
-              <h1 className="text-xl font-semibold text-gray-900">
+              <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg mr-3">
+                <Brain className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
                 Dashboard
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-600 text-sm">
+              <span className="text-slate-600 text-sm font-medium">
                 Olá, {user?.email}
               </span>
-              <Button onClick={() => navigate('/create-assistant')}>
+              <Button 
+                onClick={() => navigate('/create-assistant')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Assistente
               </Button>
@@ -81,58 +94,44 @@ const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Brain className="h-6 w-6 text-blue-600" />
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                  <Brain className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total de Assistentes</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalAssistants}</p>
+                  <p className="text-sm font-medium text-slate-600">Total de Assistentes</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{totalAssistants}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-green-50/50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Eye className="h-6 w-6 text-green-600" />
+                <div className="p-3 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl shadow-lg">
+                  <Globe className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Publicados</p>
-                  <p className="text-2xl font-bold text-gray-900">{publishedAssistants.length}</p>
+                  <p className="text-sm font-medium text-slate-600">Publicados</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{publishedAssistants.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-orange-50/50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Settings className="h-6 w-6 text-orange-600" />
+                <div className="p-3 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl shadow-lg">
+                  <Settings className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Rascunhos</p>
-                  <p className="text-2xl font-bold text-gray-900">{draftAssistants.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Crescimento</p>
-                  <p className="text-2xl font-bold text-gray-900">+{Math.floor(Math.random() * 20) + 5}%</p>
+                  <p className="text-sm font-medium text-slate-600">Rascunhos</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{draftAssistants.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -141,23 +140,31 @@ const Dashboard = () => {
 
         {/* Assistants List */}
         {assistants.length === 0 ? (
-          <Card className="text-center py-12">
+          <Card className="text-center py-16 border-0 shadow-xl bg-gradient-to-br from-white to-slate-50">
             <CardContent>
-              <Brain className="h-16 w-16 text-gray-400 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              <div className="p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Brain className="h-12 w-12 text-blue-600" />
+              </div>
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-4">
                 Bem-vindo ao Mentor AI!
               </h3>
-              <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+              <p className="text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
                 Crie seu primeiro assistente de IA personalizado e comece a revolucionar a forma como seus alunos aprendem. 
                 Com nossa plataforma, você pode criar assistentes adaptados ao seu estilo de ensino e às necessidades específicas da sua matéria.
               </p>
               <div className="space-y-4">
-                <Button onClick={() => navigate('/create-assistant')} size="lg">
+                <Button 
+                  onClick={() => navigate('/create-assistant')} 
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3"
+                >
                   <Plus className="h-5 w-5 mr-2" />
                   Criar Primeiro Assistente
                 </Button>
-                <div className="text-sm text-gray-500">
-                  ✓ Configuração em minutos ✓ Templates prontos ✓ Analytics detalhados
+                <div className="text-sm text-slate-500 flex items-center justify-center space-x-6">
+                  <span className="flex items-center">✓ Configuração em minutos</span>
+                  <span className="flex items-center">✓ Templates prontos</span>
+                  <span className="flex items-center">✓ Analytics detalhados</span>
                 </div>
               </div>
             </CardContent>
@@ -165,8 +172,13 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Meus Assistentes</h2>
-              <Button variant="outline" size="sm" onClick={() => navigate('/create-assistant')}>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Meus Assistentes</h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/create-assistant')}
+                className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Assistente
               </Button>
@@ -174,23 +186,50 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {assistants.map((assistant) => (
-                <Card key={assistant.id} className="hover:shadow-lg transition-all duration-200 border-0 shadow-md">
-                  <CardHeader>
+                <Card key={assistant.id} className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-slate-50/50 hover:scale-[1.02]">
+                  <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-1">{assistant.name}</CardTitle>
-                        <p className="text-sm text-gray-600">{assistant.subject}</p>
+                        <CardTitle className="text-lg mb-1 font-semibold text-slate-900">{assistant.name}</CardTitle>
+                        <p className="text-sm text-slate-600 font-medium">{assistant.subject}</p>
                       </div>
-                      <Badge variant={assistant.is_published ? "default" : "secondary"}>
-                        {assistant.is_published ? "Publicado" : "Rascunho"}
-                      </Badge>
+                      <div className="flex flex-col items-end space-y-2">
+                        <Badge 
+                          variant={assistant.is_published ? "default" : "secondary"}
+                          className={assistant.is_published ? 
+                            "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm" : 
+                            "bg-slate-100 text-slate-700"
+                          }
+                        >
+                          {assistant.is_published ? "Publicado" : "Rascunho"}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTogglePublish(assistant)}
+                          disabled={publishingId === assistant.id}
+                          className={`h-8 w-8 p-0 ${assistant.is_published ? 
+                            'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 
+                            'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
+                          }`}
+                          title={assistant.is_published ? "Despublicar" : "Publicar"}
+                        >
+                          {publishingId === assistant.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                          ) : assistant.is_published ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Globe className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-slate-600">
                         <User className="h-4 w-4" />
-                        <span>
+                        <span className="font-medium">
                           {assistant.personality === 'friendly' && 'Amigável'}
                           {assistant.personality === 'formal' && 'Formal'}
                           {assistant.personality === 'socratic' && 'Socrático'}
@@ -198,17 +237,17 @@ const Dashboard = () => {
                         </span>
                       </div>
                       
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-slate-600">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {new Date(assistant.created_at).toLocaleDateString()}
+                          {new Date(assistant.created_at).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
 
                       {assistant.is_published && (
-                        <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
                           <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center text-green-700 text-sm font-medium">
+                            <div className="flex items-center text-emerald-700 text-sm font-medium">
                               <LinkIcon className="h-4 w-4 mr-1" />
                               Link do Assistente
                             </div>
@@ -216,12 +255,12 @@ const Dashboard = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => copyShareLink(assistant.id)}
-                              className="h-6 w-6 p-0"
+                              className="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-xs text-green-600">
+                          <p className="text-xs text-emerald-600">
                             Compartilhe este link com seus alunos
                           </p>
                         </div>
@@ -232,7 +271,7 @@ const Dashboard = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/assistant/${assistant.id}/edit`)}
-                          className="flex-1"
+                          className="flex-1 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
                         >
                           <Settings className="h-4 w-4 mr-1" />
                           Editar
@@ -243,7 +282,7 @@ const Dashboard = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/assistant/${assistant.id}/analytics`)}
-                            className="flex-1"
+                            className="flex-1 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
                           >
                             <BarChart3 className="h-4 w-4 mr-1" />
                             Analytics
@@ -251,19 +290,19 @@ const Dashboard = () => {
                         )}
                       </div>
 
-                      <div className="flex justify-between items-center pt-2 border-t">
+                      <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                         {assistant.is_published ? (
                           <a 
                             href={`/chat/${assistant.id}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center font-medium transition-colors duration-200"
                           >
                             <MessageSquare className="h-4 w-4 mr-1" />
                             Testar Chat
                           </a>
                         ) : (
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-slate-500">
                             Publique para testar
                           </span>
                         )}
@@ -273,7 +312,7 @@ const Dashboard = () => {
                           size="sm"
                           onClick={() => handleDeleteAssistant(assistant.id)}
                           disabled={deletingId === assistant.id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0 transition-all duration-200"
                         >
                           {deletingId === assistant.id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>

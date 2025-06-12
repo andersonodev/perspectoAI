@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Save, Settings, FileText, Shield, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Settings, FileText, Shield, Eye, Globe, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import KnowledgeUpload from '@/components/KnowledgeUpload';
 import AIControlSettings from '@/components/AIControlSettings';
@@ -37,6 +37,7 @@ const EditAssistant = () => {
   const { assistants, updateAssistant } = useAssistants();
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [loading, setLoading] = useState(false);
+  const [publishingLoading, setPublishingLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     subject: '',
@@ -81,6 +82,33 @@ const EditAssistant = () => {
 
   const handleAISettingsChange = (newSettings: typeof aiSettings) => {
     setAiSettings(newSettings);
+  };
+
+  const handleTogglePublish = async () => {
+    if (!assistant) return;
+
+    setPublishingLoading(true);
+    try {
+      const newPublishState = !formData.is_published;
+      await updateAssistant(assistant.id, { is_published: newPublishState });
+      setFormData(prev => ({ ...prev, is_published: newPublishState }));
+      
+      toast({
+        title: newPublishState ? "Assistente publicado!" : "Assistente despublicado!",
+        description: newPublishState ? 
+          "Seu assistente está agora disponível para os alunos." :
+          "Seu assistente não está mais visível para os alunos."
+      });
+    } catch (error) {
+      console.error('Error toggling publish state:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o status de publicação.",
+        variant: "destructive"
+      });
+    } finally {
+      setPublishingLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -133,36 +161,56 @@ const EditAssistant = () => {
 
   if (!assistant) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Button 
                 variant="ghost" 
                 onClick={() => navigate('/dashboard')}
-                className="mr-4"
+                className="mr-4 hover:bg-slate-100 transition-colors duration-200"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
                 Editar: {assistant.name}
               </h1>
             </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={formData.is_published}
-                onCheckedChange={(checked) => handleInputChange('is_published', checked)}
-              />
-              <Label className="text-sm">Publicado</Label>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={formData.is_published}
+                  onCheckedChange={(checked) => handleInputChange('is_published', checked)}
+                />
+                <Label className="text-sm font-medium">Publicado</Label>
+              </div>
+              <Button
+                onClick={handleTogglePublish}
+                disabled={publishingLoading}
+                variant={formData.is_published ? "destructive" : "default"}
+                className={formData.is_published ? 
+                  "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600" :
+                  "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+                }
+              >
+                {publishingLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : formData.is_published ? (
+                  <EyeOff className="h-4 w-4 mr-2" />
+                ) : (
+                  <Globe className="h-4 w-4 mr-2" />
+                )}
+                {formData.is_published ? 'Despublicar' : 'Publicar'}
+              </Button>
             </div>
           </div>
         </div>
@@ -170,20 +218,20 @@ const EditAssistant = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Tabs defaultValue="basic" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-md">
-            <TabsTrigger value="basic" className="flex items-center">
+          <TabsList className="grid grid-cols-4 w-full max-w-md bg-white shadow-sm border border-slate-200">
+            <TabsTrigger value="basic" className="flex items-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
               <Settings className="h-4 w-4 mr-1" />
               Básico
             </TabsTrigger>
-            <TabsTrigger value="ai-control" className="flex items-center">
+            <TabsTrigger value="ai-control" className="flex items-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
               <Shield className="h-4 w-4 mr-1" />
               IA
             </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center">
+            <TabsTrigger value="knowledge" className="flex items-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
               <FileText className="h-4 w-4 mr-1" />
               Base
             </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center">
+            <TabsTrigger value="preview" className="flex items-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
               <Eye className="h-4 w-4 mr-1" />
               Preview
             </TabsTrigger>
@@ -191,9 +239,9 @@ const EditAssistant = () => {
 
           {/* Configurações Básicas */}
           <TabsContent value="basic">
-            <Card>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-slate-50/50">
               <CardHeader>
-                <CardTitle>Configurações Básicas</CardTitle>
+                <CardTitle className="text-xl font-semibold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Configurações Básicas</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,23 +327,22 @@ const EditAssistant = () => {
           {/* Base de Conhecimento */}
           <TabsContent value="knowledge">
             <div className="space-y-6">
-              <Card>
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-slate-50/50">
                 <CardHeader>
-                  <CardTitle>Base de Conhecimento Atual</CardTitle>
+                  <CardTitle className="text-xl font-semibold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Base de Conhecimento Atual</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <KnowledgeUpload assistantId={assistant.id} />
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-slate-50/50">
                 <CardHeader>
-                  <CardTitle>Adicionar Múltiplas Fontes</CardTitle>
+                  <CardTitle className="text-xl font-semibold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Adicionar Múltiplas Fontes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <MultipleKnowledgeUpload
                     onKnowledgeChange={(sources) => {
-                      // TODO: Implementar processamento de múltiplas fontes para assistentes existentes
                       console.log('New sources to add:', sources);
                     }}
                   />
@@ -306,9 +353,9 @@ const EditAssistant = () => {
 
           {/* Preview */}
           <TabsContent value="preview">
-            <Card>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-slate-50/50">
               <CardHeader>
-                <CardTitle>Preview do Assistente</CardTitle>
+                <CardTitle className="text-xl font-semibold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Preview do Assistente</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="border rounded-lg p-4 bg-white space-y-4">
@@ -354,7 +401,12 @@ const EditAssistant = () => {
 
         {/* Botão de Salvar */}
         <div className="flex justify-end mt-8">
-          <Button onClick={handleSubmit} disabled={loading} size="lg">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={loading} 
+            size="lg"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-8"
+          >
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
