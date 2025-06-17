@@ -1,21 +1,25 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Download, 
   RotateCcw, 
   Settings, 
   Brain, 
   Calendar,
   Map,
   Folder,
-  Zap,
-  BookOpen,
   Target,
-  Sparkles
+  Sparkles,
+  MessageCircle,
+  CreditCard,
+  Download,
+  BarChart3,
+  Zap
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import ChatInterface from '@/components/ChatInterface';
@@ -27,6 +31,7 @@ import InteractiveSimulator from '@/components/InteractiveSimulator';
 import SecondBrainBuilder from '@/components/SecondBrainBuilder';
 import SmartStudyPlan from '@/components/SmartStudyPlan';
 import KnowledgeMap from '@/components/KnowledgeMap';
+import FlashCardTool from '@/components/FlashCardTool';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -60,16 +65,7 @@ const StudentChat = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
-  
-  // Sidebar states
-  const [showProfile, setShowProfile] = useState(false);
-  const [showPaths, setShowPaths] = useState(false);
-  const [showExport, setShowExport] = useState(false);
-  const [showSpacedRepetition, setShowSpacedRepetition] = useState(false);
-  const [showSimulator, setShowSimulator] = useState(false);
-  const [showSecondBrain, setShowSecondBrain] = useState(false);
-  const [showStudyPlan, setShowStudyPlan] = useState(false);
-  const [showKnowledgeMap, setShowKnowledgeMap] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat');
   
   const [practiceMode, setPracticeMode] = useState(false);
   const [simulatorProps, setSimulatorProps] = useState<any>(null);
@@ -182,7 +178,7 @@ const StudentChat = () => {
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || !assistant || loading) return;
 
-    // Handle special commands (keep existing logic)
+    // Handle special commands
     if (messageText.startsWith('/simular')) {
       handleSimulationCommand(messageText);
       return;
@@ -194,17 +190,17 @@ const StudentChat = () => {
     }
 
     if (messageText.startsWith('/criar_plano')) {
-      setShowStudyPlan(true);
+      setActiveTab('study-plan');
       return;
     }
 
     if (messageText === '/segunda_mente') {
-      setShowSecondBrain(true);
+      setActiveTab('second-brain');
       return;
     }
 
     if (messageText === '/mapa') {
-      setShowKnowledgeMap(true);
+      setActiveTab('knowledge-map');
       return;
     }
 
@@ -278,10 +274,10 @@ const StudentChat = () => {
       type: simulationType,
       topic: topic || assistant?.subject || 'Simulação',
       description: `Simulação interativa sobre ${topic}`,
-      onClose: () => setShowSimulator(false)
+      onClose: () => setActiveTab('chat')
     });
     
-    setShowSimulator(true);
+    setActiveTab('simulator');
   };
 
   const handleConnectionCommand = (command: string) => {
@@ -359,230 +355,174 @@ const StudentChat = () => {
   }
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Sidebar */}
-      <div className="w-80 bg-white/80 backdrop-blur-md border-r border-slate-200/50 flex flex-col">
-        {/* Sidebar Header */}
-        <div className="p-6 border-b border-slate-200/50">
-          <div className="flex items-center justify-between mb-4">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
             <img 
               src="/lovable-uploads/88cf8fc6-b9d1-4447-b0c5-ba3ec309066d.png" 
               alt="Mentor AI" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
-            <div className="flex space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowProfile(!showProfile)}
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearChatHistory}
-                disabled={messages.length === 0}
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900">{assistant.name}</h1>
+              <p className="text-sm text-slate-600">Especialista em {assistant.subject}</p>
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-              {assistant.personality === 'friendly' && '😊 Amigável'}
-              {assistant.personality === 'formal' && '🎓 Formal'}
-              {assistant.personality === 'socratic' && '🤔 Socrático'}
-              {assistant.personality === 'creative' && '🎨 Criativo'}
-            </Badge>
-            {assistant.guardrails?.citationMode && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                📚 Cita Fontes
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                {assistant.personality === 'friendly' && '😊 Amigável'}
+                {assistant.personality === 'formal' && '🎓 Formal'}
+                {assistant.personality === 'socratic' && '🤔 Socrático'}
+                {assistant.personality === 'creative' && '🎨 Criativo'}
               </Badge>
-            )}
-            {assistant.guardrails?.antiCheatMode && (
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                🛡️ Anti-Cola
-              </Badge>
-            )}
+              {practiceMode && (
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                  <Target className="h-3 w-3 mr-1" />
+                  Modo Prática
+                </Badge>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={clearChatHistory}>
+              <RotateCcw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
+      </header>
 
-        {/* Tools Section */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
-            {/* AI Tools */}
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-purple-50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Sparkles className="h-4 w-4 mr-2 text-indigo-600" />
-                  Ferramentas de IA
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-9"
-                  onClick={() => setShowSpacedRepetition(!showSpacedRepetition)}
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  Coach de Revisão
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-9"
-                  onClick={() => setShowSecondBrain(!showSecondBrain)}
-                >
-                  <Folder className="h-4 w-4 mr-2" />
-                  Segunda Mente
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-9"
-                  onClick={() => setShowStudyPlan(!showStudyPlan)}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Plano de Estudos
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-9"
-                  onClick={() => setShowKnowledgeMap(!showKnowledgeMap)}
-                >
-                  <Map className="h-4 w-4 mr-2" />
-                  Mapa de Conhecimento
-                </Button>
-              </CardContent>
-            </Card>
+      {/* Main Content with Tabs */}
+      <div className="flex-1 flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="mx-4 mt-4 grid grid-cols-8 w-fit bg-white/80 backdrop-blur-md">
+            <TabsTrigger value="chat" className="flex items-center space-x-2">
+              <MessageCircle className="h-4 w-4" />
+              <span>Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="revision-coach">
+              <Brain className="h-4 w-4 mr-1" />
+              Coach
+            </TabsTrigger>
+            <TabsTrigger value="flashcards">
+              <CreditCard className="h-4 w-4 mr-1" />
+              Flashcards
+            </TabsTrigger>
+            <TabsTrigger value="second-brain">
+              <Folder className="h-4 w-4 mr-1" />
+              Segunda Mente
+            </TabsTrigger>
+            <TabsTrigger value="study-plan">
+              <Calendar className="h-4 w-4 mr-1" />
+              Plano
+            </TabsTrigger>
+            <TabsTrigger value="knowledge-map">
+              <Map className="h-4 w-4 mr-1" />
+              Mapa
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="export">
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Practice Mode */}
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-pink-50">
-              <CardContent className="p-4">
-                <Button
-                  variant={practiceMode ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() => setPracticeMode(!practiceMode)}
-                >
-                  <Target className="h-4 w-4 mr-2" />
-                  {practiceMode ? 'Sair do Modo Prática' : 'Modo Prática'}
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="flex-1 overflow-hidden">
+            <TabsContent value="chat" className="h-full mt-0">
+              <div className="h-full flex flex-col">
+                {activeTab === 'chat' && simulatorProps && (
+                  <div className="p-6 border-b border-slate-200/50">
+                    <InteractiveSimulator {...simulatorProps} />
+                  </div>
+                )}
+                
+                <div className="flex-1">
+                  <ChatInterface
+                    messages={messages}
+                    onSendMessage={sendMessage}
+                    onFeedback={submitFeedback}
+                    loading={loading}
+                    assistantName={assistant.name}
+                    assistantSubject={assistant.subject}
+                    practiceMode={practiceMode}
+                  />
+                </div>
 
-            {/* Export */}
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowExport(!showExport)}
-                  disabled={messages.length === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar Conversa
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                {/* Practice Mode Toggle */}
+                <div className="p-4 border-t border-slate-200/50 bg-white/50">
+                  <div className="flex items-center justify-center">
+                    <Button
+                      variant={practiceMode ? "default" : "outline"}
+                      onClick={() => setPracticeMode(!practiceMode)}
+                      className={practiceMode ? "bg-purple-600 hover:bg-purple-700" : ""}
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      {practiceMode ? 'Sair do Modo Prática' : 'Modo Prática'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
 
-          {/* Conditional Components */}
-          {showSpacedRepetition && (
-            <div className="mt-6">
+            <TabsContent value="revision-coach" className="h-full mt-0 overflow-y-auto">
               <SpacedRepetitionCoach 
                 assistantId={assistant?.id || ''} 
                 sessionId={sessionId} 
               />
-            </div>
-          )}
+            </TabsContent>
 
-          {showProfile && (
-            <div className="mt-6">
-              <LearningProfile sessionId={sessionId} assistantId={assistant?.id || ''} />
-            </div>
-          )}
-          
-          {showPaths && (
-            <div className="mt-6">
-              <AdaptiveLearningPaths
-                currentTopic={assistant?.subject || ''}
-                studentLevel="intermediate"
-                onSelectPath={(path) => {
-                  const pathMessage = `Vamos seguir o caminho: ${path.title}. ${path.description}`;
-                  sendMessage(pathMessage);
-                  setShowPaths(false);
+            <TabsContent value="flashcards" className="h-full mt-0 overflow-y-auto">
+              <FlashCardTool
+                assistantId={assistant?.id || ''}
+                sessionId={sessionId}
+                chatMessages={messages}
+              />
+            </TabsContent>
+
+            <TabsContent value="second-brain" className="h-full mt-0 overflow-y-auto">
+              <SecondBrainBuilder
+                assistantId={assistant?.id || ''}
+                sessionId={sessionId}
+                onKnowledgeUpdate={() => {
+                  toast({
+                    title: "Segunda Mente Atualizada!",
+                    description: "Seu banco de conhecimento pessoal foi enriquecido."
+                  });
                 }}
               />
-            </div>
-          )}
+            </TabsContent>
 
-          {showExport && (
-            <div className="mt-6">
+            <TabsContent value="study-plan" className="h-full mt-0 overflow-y-auto">
+              <SmartStudyPlan
+                assistantId={assistant?.id || ''}
+                sessionId={sessionId}
+              />
+            </TabsContent>
+
+            <TabsContent value="knowledge-map" className="h-full mt-0 overflow-y-auto">
+              <KnowledgeMap
+                assistantId={assistant?.id || ''}
+                sessionId={sessionId}
+                subject={assistant?.subject || 'Geral'}
+              />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="h-full mt-0 overflow-y-auto">
+              <LearningProfile sessionId={sessionId} assistantId={assistant?.id || ''} />
+            </TabsContent>
+
+            <TabsContent value="export" className="h-full mt-0 overflow-y-auto">
               <AdvancedExport
                 messages={messages}
                 assistantName={assistant?.name || ''}
                 subject={assistant?.subject || ''}
               />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Special Components */}
-        {showSimulator && simulatorProps && (
-          <div className="p-6 border-b border-slate-200/50">
-            <InteractiveSimulator {...simulatorProps} />
+            </TabsContent>
           </div>
-        )}
-
-        {showSecondBrain && (
-          <div className="p-6 border-b border-slate-200/50">
-            <SecondBrainBuilder
-              assistantId={assistant?.id || ''}
-              sessionId={sessionId}
-              onKnowledgeUpdate={() => {
-                toast({
-                  title: "Segunda Mente Atualizada!",
-                  description: "Seu banco de conhecimento pessoal foi enriquecido."
-                });
-              }}
-            />
-          </div>
-        )}
-
-        {showStudyPlan && (
-          <div className="p-6 border-b border-slate-200/50">
-            <SmartStudyPlan
-              assistantId={assistant?.id || ''}
-              sessionId={sessionId}
-            />
-          </div>
-        )}
-
-        {showKnowledgeMap && (
-          <div className="p-6 border-b border-slate-200/50">
-            <KnowledgeMap
-              assistantId={assistant?.id || ''}
-              sessionId={sessionId}
-              subject={assistant?.subject || 'Geral'}
-            />
-          </div>
-        )}
-
-        {/* Chat Interface */}
-        <div className="flex-1">
-          <ChatInterface
-            messages={messages}
-            onSendMessage={sendMessage}
-            onFeedback={submitFeedback}
-            loading={loading}
-            assistantName={assistant.name}
-            assistantSubject={assistant.subject}
-            practiceMode={practiceMode}
-          />
-        </div>
+        </Tabs>
       </div>
     </div>
   );
