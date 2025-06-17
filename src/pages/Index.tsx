@@ -1,393 +1,290 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { 
-  Brain, 
-  Users, 
-  MessageSquare, 
-  TrendingUp, 
-  Search, 
-  Star,
-  Bot,
-  BookOpen,
-  Sparkles
-} from 'lucide-react';
-
-interface PublicAssistant {
-  id: string;
-  name: string;
-  subject: string;
-  personality: string;
-  welcome_message: string;
-  created_at: string;
-}
-
-interface Stats {
-  totalAssistants: number;
-  totalSessions: number;
-  totalMessages: number;
-  avgSatisfaction: number;
-}
+import { ArrowRight, Sparkles, Shield, Zap, Users, BookOpen, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
-  const [assistants, setAssistants] = useState<PublicAssistant[]>([]);
-  const [stats, setStats] = useState<Stats>({
-    totalAssistants: 0,
-    totalSessions: 0,
-    totalMessages: 0,
-    avgSatisfaction: 0
-  });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchPublicAssistants();
-    fetchStats();
-  }, []);
-
-  const fetchPublicAssistants = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('ai_assistants')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (error) throw error;
-      setAssistants(data || []);
-    } catch (error) {
-      console.error('Error fetching assistants:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      // Count total published assistants
-      const { count: assistantCount } = await supabase
-        .from('ai_assistants')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_published', true);
-
-      // Count total sessions
-      const { count: sessionCount } = await supabase
-        .from('assistant_analytics')
-        .select('*', { count: 'exact', head: true });
-
-      // Sum total messages
-      const { data: messagesData } = await supabase
-        .from('assistant_analytics')
-        .select('messages_count');
-
-      const totalMessages = messagesData?.reduce((sum, item) => sum + item.messages_count, 0) || 0;
-
-      // Calculate average satisfaction
-      const { data: feedbackData } = await supabase
-        .from('message_feedback')
-        .select('feedback');
-
-      let avgSatisfaction = 0;
-      if (feedbackData && feedbackData.length > 0) {
-        const positiveCount = feedbackData.filter(f => f.feedback === 1).length;
-        avgSatisfaction = (positiveCount / feedbackData.length) * 100;
-      }
-
-      setStats({
-        totalAssistants: assistantCount || 0,
-        totalSessions: sessionCount || 0,
-        totalMessages,
-        avgSatisfaction: Math.round(avgSatisfaction)
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
-
-  const filteredAssistants = assistants.filter(assistant =>
-    assistant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    assistant.subject.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getPersonalityColor = (personality: string) => {
-    const colors = {
-      friendly: 'bg-green-100 text-green-800',
-      formal: 'bg-blue-100 text-blue-800',
-      socratic: 'bg-purple-100 text-purple-800',
-      creative: 'bg-orange-100 text-orange-800'
-    };
-    return colors[personality as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getPersonalityLabel = (personality: string) => {
-    const labels = {
-      friendly: 'Amigável',
-      formal: 'Formal',
-      socratic: 'Socrático',
-      creative: 'Criativo'
-    };
-    return labels[personality as keyof typeof labels] || personality;
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/lovable-uploads/88cf8fc6-b9d1-4447-b0c5-ba3ec309066d.png" 
+                alt="Mentor AI" 
+                className="h-10 w-auto"
+              />
+            </div>
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">
+                Recursos
+              </a>
+              <a href="#how-it-works" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">
+                Como Funciona
+              </a>
+              <a href="#pricing" className="text-slate-600 hover:text-indigo-600 transition-colors font-medium">
+                Preços
+              </a>
+            </nav>
+            <div className="flex items-center space-x-4">
+              <Link to="/auth">
+                <Button variant="ghost" className="text-slate-600 hover:text-indigo-600">
+                  Entrar
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-xl transition-all">
+                  Começar Grátis
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex justify-center mb-8">
-            <div className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
-              <Brain className="h-12 w-12 text-white" />
-            </div>
-          </div>
-          
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Mentor AI
-            </span>
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Plataforma de aprendizado adaptativo com assistentes de IA personalizados. 
-            Transforme a educação com inteligência artificial que se adapta ao seu método de ensino.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                <Sparkles className="h-5 w-5 mr-2" />
-                Criar Assistente Grátis
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" onClick={() => {
-              document.getElementById('assistants')?.scrollIntoView({ behavior: 'smooth' });
-            }}>
-              <BookOpen className="h-5 w-5 mr-2" />
-              Explorar Assistentes
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Impacto em Números
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <Bot className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stats.totalAssistants}</h3>
-                <p className="text-gray-600">Assistentes Ativos</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <Users className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stats.totalSessions}</h3>
-                <p className="text-gray-600">Sessões de Estudo</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <MessageSquare className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stats.totalMessages}</h3>
-                <p className="text-gray-600">Mensagens Trocadas</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-orange-100 rounded-full">
-                    <Star className="h-6 w-6 text-orange-600" />
-                  </div>
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stats.avgSatisfaction}%</h3>
-                <p className="text-gray-600">Satisfação dos Alunos</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Assistants Section */}
-      <section id="assistants" className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Assistentes Populares
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Explore assistentes criados por educadores para diferentes matérias e estilos de ensino
+      <section className="pt-20 pb-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <Badge variant="secondary" className="mb-6 bg-indigo-100 text-indigo-700 border-indigo-200">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Tecnologia IA Avançada
+            </Badge>
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 leading-tight">
+              Assistentes de IA para
+              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent block">
+                Educação Personalizada
+              </span>
+            </h1>
+            <p className="text-xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+              Crie assistentes educacionais inteligentes que se adaptam ao estilo de aprendizagem de cada estudante. 
+              Transforme a educação com IA personalizada e feedback em tempo real.
             </p>
-            
-            <div className="max-w-md mx-auto mb-8">
-              <div className="relative">
-                <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Buscar por matéria ou nome..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/auth">
+                <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all">
+                  Criar Assistente Gratuito
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/transparency">
+                <Button size="lg" variant="outline" className="px-8 py-4 text-lg border-slate-300 hover:border-indigo-300 hover:bg-indigo-50">
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  Ver Demonstração
+                </Button>
+              </Link>
             </div>
           </div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-4">Carregando assistentes...</p>
-            </div>
-          ) : filteredAssistants.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAssistants.map((assistant) => (
-                <Card key={assistant.id} className="hover:shadow-lg transition-shadow border-0 shadow-md">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{assistant.name}</CardTitle>
-                        <p className="text-sm text-gray-600">{assistant.subject}</p>
-                      </div>
-                      <Badge className={getPersonalityColor(assistant.personality)}>
-                        {getPersonalityLabel(assistant.personality)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                      {assistant.welcome_message || 'Um assistente especializado em ajudar alunos.'}
-                    </p>
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-500">
-                        Criado em {new Date(assistant.created_at).toLocaleDateString()}
-                      </p>
-                      <Link to={`/chat/${assistant.id}`}>
-                        <Button size="sm">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Conversar
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Bot className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
-                {searchTerm ? 'Nenhum assistente encontrado' : 'Nenhum assistente disponível'}
-              </h3>
-              <p className="text-gray-600">
-                {searchTerm 
-                  ? 'Tente buscar por outros termos ou explore todas as categorias.'
-                  : 'Seja o primeiro a criar um assistente e compartilhar conhecimento!'
-                }
-              </p>
-            </div>
-          )}
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Por que Escolher o Mentor AI?
-          </h2>
+      <section id="features" className="py-24 bg-white/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">
+              Recursos Avançados de IA Educacional
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Tecnologia de ponta para criar experiências de aprendizado únicas e eficazes
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-indigo-600" />
+                </div>
+                <CardTitle className="text-xl text-slate-900">Chat Inteligente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600">
+                  Conversas naturais com IA que entende contexto, oferece explicações claras e se adapta ao ritmo do aluno.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+                <CardTitle className="text-xl text-slate-900">Aprendizado Adaptativo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600">
+                  Algoritmos que identificam lacunas de conhecimento e personalizam o conteúdo para cada estudante.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                  <Shield className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle className="text-xl text-slate-900">Anti-Cola Inteligente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600">
+                  Sistema avançado que detecta tentativas de cola e direciona para aprendizado genuíno.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <Zap className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle className="text-xl text-slate-900">Simulações Interativas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600">
+                  Ambientes virtuais para experimentação prática em física, química, matemática e economia.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                  <BookOpen className="h-6 w-6 text-orange-600" />
+                </div>
+                <CardTitle className="text-xl text-slate-900">Segunda Mente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600">
+                  Sistema de gestão de conhecimento pessoal que organiza e conecta tudo que você aprende.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                  <Sparkles className="h-6 w-6 text-red-600" />
+                </div>
+                <CardTitle className="text-xl text-slate-900">Analytics Avançados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600">
+                  Métricas detalhadas de progresso, identificação de padrões e insights para otimizar o aprendizado.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section id="how-it-works" className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">
+              Como Funciona
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Três passos simples para revolucionar o ensino
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-8">
-                <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  IA Personalizada
-                </h3>
-                <p className="text-gray-600">
-                  Crie assistentes com personalidades e conhecimentos específicos para suas matérias.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-8">
-                <TrendingUp className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  Analytics Detalhados
-                </h3>
-                <p className="text-gray-600">
-                  Monitore o engajamento dos alunos e identifique oportunidades de melhoria.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-0 shadow-lg">
-              <CardContent className="p-8">
-                <Users className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  Fácil Compartilhamento
-                </h3>
-                <p className="text-gray-600">
-                  Compartilhe seus assistentes com alunos através de links simples e seguros.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                1
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">Crie seu Assistente</h3>
+              <p className="text-slate-600">
+                Configure personalidade, matéria e upload de materiais didáticos em poucos minutos.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                2
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">Publique e Compartilhe</h3>
+              <p className="text-slate-600">
+                Torne seu assistente disponível para estudantes com um simples link de compartilhamento.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                3
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">Acompanhe o Progresso</h3>
+              <p className="text-slate-600">
+                Monitore interações, identifique dificuldades e otimize o aprendizado com analytics avançados.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Pronto para Revolucionar o Ensino?
+      <section className="py-24 bg-gradient-to-r from-indigo-600 to-purple-600">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Pronto para Transformar a Educação?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Crie seu primeiro assistente de IA em minutos e veja como seus alunos se engajam de forma diferente.
+          <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+            Junte-se a milhares de educadores que já estão usando IA para personalizar o aprendizado.
           </p>
           <Link to="/auth">
-            <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
-              <Sparkles className="h-5 w-5 mr-2" />
-              Começar Agora - É Grátis
+            <Button size="lg" className="bg-white text-indigo-600 hover:bg-gray-50 px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all">
+              Começar Gratuitamente
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-gray-900 text-white">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex justify-center mb-4">
-            <Brain className="h-8 w-8 text-blue-400" />
+      <footer className="bg-slate-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <img 
+                src="/lovable-uploads/88cf8fc6-b9d1-4447-b0c5-ba3ec309066d.png" 
+                alt="Mentor AI" 
+                className="h-8 w-auto mb-4 filter brightness-0 invert"
+              />
+              <p className="text-slate-400 max-w-md">
+                Plataforma de IA educacional que personaliza o aprendizado e potencializa o ensino através de assistentes inteligentes.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Produto</h3>
+              <ul className="space-y-2 text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors">Recursos</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Preços</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Documentação</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Suporte</h3>
+              <ul className="space-y-2 text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors">Central de Ajuda</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+              </ul>
+            </div>
           </div>
-          <p className="text-gray-400">
-            © 2024 Mentor AI. Transformando a educação com inteligência artificial.
-          </p>
+          
+          <div className="border-t border-slate-800 mt-12 pt-8 text-center text-slate-400">
+            <p>&copy; 2024 Mentor AI. Todos os direitos reservados.</p>
+          </div>
         </div>
       </footer>
     </div>
