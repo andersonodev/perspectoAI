@@ -30,7 +30,7 @@ import { toast } from '@/hooks/use-toast';
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { data: assistants, isLoading, refetch } = useAssistants(user?.id);
+  const { assistants, loading, refetch } = useAssistants();
   const [updatingAssistant, setUpdatingAssistant] = useState<string | null>(null);
 
   const handleSignOut = async () => {
@@ -126,7 +126,7 @@ const Dashboard = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-center">
