@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +31,15 @@ import SecondBrainBuilder from '@/components/SecondBrainBuilder';
 import SmartStudyPlan from '@/components/SmartStudyPlan';
 import KnowledgeMap from '@/components/KnowledgeMap';
 import FlashCardTool from '@/components/FlashCardTool';
+import { useXPSystem } from '@/hooks/useXPSystem';
+import { useI18n } from '@/hooks/useI18n';
+import { useAssistantMemory } from '@/hooks/useAssistantMemory';
+import { useAITransparency } from '@/hooks/useAITransparency';
+import XPWidget from '@/components/XPWidget';
+import ThemeToggle from '@/components/ThemeToggle';
+import LanguageSelector from '@/components/LanguageSelector';
+import TransparencyPanel from '@/components/TransparencyPanel';
+import ThreeJSSimulation from '@/components/ThreeJSSimulation';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -69,6 +77,13 @@ const StudentChat = () => {
   
   const [practiceMode, setPracticeMode] = useState(false);
   const [simulatorProps, setSimulatorProps] = useState<any>(null);
+
+  const { awardXP } = useXPSystem();
+  const { t } = useI18n();
+  const { saveMemory, analyzeUserPreferences } = useAssistantMemory(id || '', sessionId);
+  const { logDecision } = useAITransparency(id || '', sessionId);
+  
+  const [currentMessageId, setCurrentMessageId] = useState<string>('');
 
   useEffect(() => {
     if (id) {
@@ -210,10 +225,26 @@ const StudentChat = () => {
       timestamp: new Date()
     };
 
+    const messageId = Math.random().toString(36).substring(7);
+    setCurrentMessageId(messageId);
+
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
 
     try {
+      // Award XP for sending message
+      await awardXP(10, 'message_sent', { message_length: messageText.length });
+
+      // Analyze user preferences from recent messages
+      await analyzeUserPreferences([...messages, userMessage]);
+
+      // Log AI decision about response style
+      const userMemory = await saveMemory('recent_interaction', 'last_message', {
+        content: messageText,
+        timestamp: new Date().toISOString(),
+        length: messageText.length
+      });
+
       const { data, error } = await supabase.functions.invoke('gemini-chat', {
         body: {
           message: messageText,
@@ -233,6 +264,19 @@ const StudentChat = () => {
       });
 
       if (error) throw error;
+
+      // Log AI reasoning for transparency
+      await logDecision(
+        messageId,
+        'response_generation',
+        `Generated response based on user message "${messageText.substring(0, 50)}..." using assistant personality: ${assistant.personality}`,
+        0.85,
+        {
+          message_length: messageText.length,
+          assistant_personality: assistant.personality,
+          guardrails_active: Object.keys(assistant.guardrails).length > 0
+        }
+      );
 
       const assistantMessage: Message = {
         role: 'assistant',
@@ -355,39 +399,55 @@ const StudentChat = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 p-4">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <img 
               src="/lovable-uploads/88cf8fc6-b9d1-4447-b0c5-ba3ec309066d.png" 
               alt="Mentor AI" 
-              className="h-12 w-auto"
+              className="h-16 w-auto"
             />
             <div>
-              <h1 className="text-lg font-semibold text-slate-900">{assistant.name}</h1>
-              <p className="text-sm text-slate-600">Especialista em {assistant.subject}</p>
+              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {assistant?.name}
+              </h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t('chat')} • {assistant?.subject}
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-                {assistant.personality === 'friendly' && '😊 Amigável'}
-                {assistant.personality === 'formal' && '🎓 Formal'}
-                {assistant.personality === 'socratic' && '🤔 Socrático'}
-                {assistant.personality === 'creative' && '🎨 Criativo'}
-              </Badge>
-              {practiceMode && (
-                <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                  <Target className="h-3 w-3 mr-1" />
-                  Modo Prática
-                </Badge>
-              )}
+          
+          <div className="flex items-center space-x-4">
+            {/* XP Widget */}
+            <div className="hidden md:block w-64">
+              <XPWidget />
             </div>
-            <Button variant="ghost" size="sm" onClick={clearChatHistory}>
-              <RotateCcw className="h-4 w-4" />
-            </Button>
+            
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-700">
+                  {assistant?.personality === 'friendly' && '😊 Amigável'}
+                  {assistant?.personality === 'formal' && '🎓 Formal'}
+                  {assistant?.personality === 'socratic' && '🤔 Socrático'}
+                  {assistant?.personality === 'creative' && '🎨 Criativo'}
+                </Badge>
+                {practiceMode && (
+                  <Badge className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-700">
+                    <Target className="h-3 w-3 mr-1" />
+                    Modo Prática
+                  </Badge>
+                )}
+              </div>
+              
+              <ThemeToggle />
+              <LanguageSelector />
+              
+              <Button variant="ghost" size="sm" onClick={clearChatHistory}>
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -395,10 +455,10 @@ const StudentChat = () => {
       {/* Main Content with Tabs */}
       <div className="flex-1 flex flex-col">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="mx-4 mt-4 grid grid-cols-8 w-fit bg-white/80 backdrop-blur-md">
+          <TabsList className="mx-4 mt-4 grid grid-cols-9 w-fit bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
             <TabsTrigger value="chat" className="flex items-center space-x-2">
               <MessageCircle className="h-4 w-4" />
-              <span>Chat</span>
+              <span>{t('chat')}</span>
             </TabsTrigger>
             <TabsTrigger value="revision-coach">
               <Brain className="h-4 w-4 mr-1" />
@@ -406,7 +466,7 @@ const StudentChat = () => {
             </TabsTrigger>
             <TabsTrigger value="flashcards">
               <CreditCard className="h-4 w-4 mr-1" />
-              Flashcards
+              {t('flashcards')}
             </TabsTrigger>
             <TabsTrigger value="second-brain">
               <Folder className="h-4 w-4 mr-1" />
@@ -414,11 +474,15 @@ const StudentChat = () => {
             </TabsTrigger>
             <TabsTrigger value="study-plan">
               <Calendar className="h-4 w-4 mr-1" />
-              Plano
+              {t('study_plan')}
             </TabsTrigger>
             <TabsTrigger value="knowledge-map">
               <Map className="h-4 w-4 mr-1" />
-              Mapa
+              {t('knowledge_map')}
+            </TabsTrigger>
+            <TabsTrigger value="simulation">
+              <Zap className="h-4 w-4 mr-1" />
+              Simulação
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <BarChart3 className="h-4 w-4 mr-1" />
@@ -433,26 +497,31 @@ const StudentChat = () => {
           <div className="flex-1 overflow-hidden">
             <TabsContent value="chat" className="h-full mt-0">
               <div className="h-full flex flex-col">
-                {activeTab === 'chat' && simulatorProps && (
-                  <div className="p-6 border-b border-slate-200/50">
-                    <InteractiveSimulator {...simulatorProps} />
-                  </div>
-                )}
-                
                 <div className="flex-1">
                   <ChatInterface
                     messages={messages}
                     onSendMessage={sendMessage}
                     onFeedback={submitFeedback}
                     loading={loading}
-                    assistantName={assistant.name}
-                    assistantSubject={assistant.subject}
+                    assistantName={assistant?.name || ''}
+                    assistantSubject={assistant?.subject || ''}
                     practiceMode={practiceMode}
                   />
                 </div>
 
+                {/* Transparency Panel */}
+                {currentMessageId && (
+                  <div className="p-4 border-t border-slate-200/50 dark:border-slate-700/50">
+                    <TransparencyPanel
+                      assistantId={assistant?.id || ''}
+                      sessionId={sessionId}
+                      messageId={currentMessageId}
+                    />
+                  </div>
+                )}
+
                 {/* Practice Mode Toggle */}
-                <div className="p-4 border-t border-slate-200/50 bg-white/50">
+                <div className="p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-900/50">
                   <div className="flex items-center justify-center">
                     <Button
                       variant={practiceMode ? "default" : "outline"}
@@ -463,6 +532,24 @@ const StudentChat = () => {
                       {practiceMode ? 'Sair do Modo Prática' : 'Modo Prática'}
                     </Button>
                   </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="simulation" className="h-full mt-0 overflow-y-auto">
+              <div className="p-6">
+                <ThreeJSSimulation
+                  type="pendulum"
+                  title="Simulação de Pêndulo"
+                  description="Observe o movimento oscilatório de um pêndulo simples com física realista"
+                />
+                
+                <div className="mt-6">
+                  <ThreeJSSimulation
+                    type="orbit"
+                    title="Sistema Solar Simplificado"
+                    description="Visualize o movimento orbital de um planeta ao redor do sol"
+                  />
                 </div>
               </div>
             </TabsContent>
