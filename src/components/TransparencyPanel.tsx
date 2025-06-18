@@ -16,12 +16,16 @@ import { useAITransparency } from '@/hooks/useAITransparency';
 import { useI18n } from '@/hooks/useI18n';
 
 interface TransparencyPanelProps {
-  assistantId: string;
-  sessionId: string;
+  assistantId?: string;
+  sessionId?: string;
   messageId?: string;
 }
 
-const TransparencyPanel = ({ assistantId, sessionId, messageId }: TransparencyPanelProps) => {
+const TransparencyPanel = ({ 
+  assistantId = 'demo-assistant', 
+  sessionId = 'demo-session', 
+  messageId 
+}: TransparencyPanelProps) => {
   const { getDecisionLogs } = useAITransparency(assistantId, sessionId);
   const { t } = useI18n();
   const [logs, setLogs] = useState<any[]>([]);
