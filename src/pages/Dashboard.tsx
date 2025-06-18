@@ -19,7 +19,13 @@ import {
   Sparkles,
   TrendingUp,
   Calendar,
-  Zap
+  Zap,
+  Crown,
+  Star,
+  Gem,
+  Palette,
+  Menu,
+  X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +38,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { assistants, loading, refetch } = useAssistants();
   const [updatingAssistant, setUpdatingAssistant] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -128,149 +135,230 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600">Carregando dashboard...</p>
+          <div className="w-16 h-16 border-4 border-violet-400/30 border-t-violet-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-violet-200 font-medium">Carregando seu workspace premium...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+
+      {/* Premium Header */}
+      <header className="relative z-50 backdrop-blur-xl bg-white/5 border-b border-white/10 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <img 
-                src="/lovable-uploads/88cf8fc6-b9d1-4447-b0c5-ba3ec309066d.png" 
-                alt="Mentor AI" 
-                className="h-10 w-auto"
-              />
-            </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-3">
-                <Avatar className="h-8 w-8 bg-gradient-to-br from-indigo-500 to-purple-600">
-                  <AvatarFallback className="text-white text-sm">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-sm">
-                  <p className="font-medium text-slate-900">{user?.email}</p>
-                  <p className="text-slate-600">Educador</p>
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <img 
+                    src="/lovable-uploads/88cf8fc6-b9d1-4447-b0c5-ba3ec309066d.png" 
+                    alt="Mentor AI" 
+                    className="h-10 w-auto drop-shadow-lg"
+                  />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full animate-pulse"></div>
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent">
+                    Premium Workspace
+                  </h1>
                 </div>
               </div>
-              <Button variant="ghost" onClick={handleSignOut} className="text-slate-600">
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-violet-200 hover:text-white hover:bg-white/10"
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
+
+            {/* Desktop User Menu */}
+            <div className="hidden lg:flex items-center space-x-6">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Avatar className="h-10 w-10 ring-2 ring-violet-400/50 shadow-lg bg-gradient-to-br from-violet-500 to-purple-600">
+                    <AvatarFallback className="text-white font-semibold bg-gradient-to-br from-violet-500 to-purple-600">
+                      {user?.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
+                    <Crown className="h-2 w-2 text-yellow-900" />
+                  </div>
+                </div>
+                <div className="text-sm">
+                  <p className="font-semibold text-violet-100">{user?.email}</p>
+                  <p className="text-violet-300 flex items-center gap-1">
+                    <Gem className="h-3 w-3" />
+                    Educador Premium
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                onClick={handleSignOut} 
+                className="text-violet-200 hover:text-white hover:bg-white/10 transition-all duration-300"
+              >
                 Sair
               </Button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden border-t border-white/10 py-4 backdrop-blur-xl bg-white/5">
+              <div className="flex items-center space-x-4 mb-4">
+                <Avatar className="h-8 w-8 ring-2 ring-violet-400/50 bg-gradient-to-br from-violet-500 to-purple-600">
+                  <AvatarFallback className="text-white text-sm bg-gradient-to-br from-violet-500 to-purple-600">
+                    {user?.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-sm">
+                  <p className="font-medium text-violet-100">{user?.email}</p>
+                  <p className="text-violet-300 text-xs flex items-center gap-1">
+                    <Gem className="h-2 w-2" />
+                    Educador Premium
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                onClick={handleSignOut}
+                className="w-full justify-start text-violet-200 hover:text-white hover:bg-white/10"
+              >
+                Sair
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Bem-vindo ao seu Dashboard! 👋
-          </h1>
-          <p className="text-slate-600">
-            Gerencie seus assistentes de IA e acompanhe o progresso dos estudantes.
-          </p>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Premium Welcome Section */}
+        <div className="mb-8 text-center lg:text-left">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-violet-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent mb-2">
+                Bem-vindo ao seu Workspace Premium ✨
+              </h1>
+              <p className="text-violet-300 max-w-2xl">
+                Crie experiências de aprendizado extraordinárias com tecnologia de ponta em IA educacional.
+              </p>
+            </div>
+            <Link to="/create-assistant" className="lg:flex-shrink-0">
+              <Button className="w-full lg:w-auto bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-2xl hover:shadow-violet-500/25 transition-all duration-300 border-0 px-8 py-3">
+                <Plus className="h-5 w-5 mr-2" />
+                Criar Assistente
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-indigo-100 text-sm">Total de Assistentes</p>
-                  <p className="text-2xl font-bold">{assistants?.length || 0}</p>
+        {/* Premium Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+          {[
+            { 
+              title: "Assistentes", 
+              value: assistants?.length || 0, 
+              icon: Bot, 
+              gradient: "from-violet-500 to-purple-600",
+              iconBg: "bg-violet-500/20",
+              textColor: "text-violet-100"
+            },
+            { 
+              title: "Publicados", 
+              value: assistants?.filter(a => a.is_published).length || 0, 
+              icon: Eye, 
+              gradient: "from-purple-500 to-pink-600",
+              iconBg: "bg-purple-500/20",
+              textColor: "text-purple-100"
+            },
+            { 
+              title: "Interações", 
+              value: "127", 
+              icon: MessageSquare, 
+              gradient: "from-pink-500 to-rose-600",
+              iconBg: "bg-pink-500/20",
+              textColor: "text-pink-100"
+            },
+            { 
+              title: "Satisfação", 
+              value: "94%", 
+              icon: Star, 
+              gradient: "from-rose-500 to-orange-600",
+              iconBg: "bg-rose-500/20",
+              textColor: "text-rose-100"
+            }
+          ].map((stat, index) => (
+            <Card key={index} className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+              <CardContent className="p-4 lg:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-xs lg:text-sm ${stat.textColor} opacity-80 mb-1`}>{stat.title}</p>
+                    <p className="text-xl lg:text-2xl font-bold text-white">{stat.value}</p>
+                  </div>
+                  <div className={`${stat.iconBg} p-2 lg:p-3 rounded-xl group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
+                  </div>
                 </div>
-                <Bot className="h-8 w-8 text-indigo-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">Publicados</p>
-                  <p className="text-2xl font-bold">
-                    {assistants?.filter(a => a.is_published).length || 0}
-                  </p>
-                </div>
-                <Eye className="h-8 w-8 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">Interações Hoje</p>
-                  <p className="text-2xl font-bold">127</p>
-                </div>
-                <MessageSquare className="h-8 w-8 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm">Taxa de Satisfação</p>
-                  <p className="text-2xl font-bold">94%</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-orange-200" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Assistants List */}
-          <div className="lg:col-span-2">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+          {/* Assistants Section */}
+          <div className="xl:col-span-2">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900">Meus Assistentes</h2>
-              <Link to="/create-assistant">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-xl transition-all">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Assistente
-                </Button>
-              </Link>
+              <h2 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
+                <Palette className="h-6 w-6 text-violet-400" />
+                Meus Assistentes
+              </h2>
             </div>
 
             {assistants && assistants.length > 0 ? (
               <div className="space-y-4">
-                {assistants.map((assistant) => (
-                  <Card key={assistant.id} className="border-0 shadow-sm bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4 flex-1">
-                          <Avatar className="h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600">
-                            <AvatarFallback className="text-white font-semibold">
-                              {getPersonalityIcon(assistant.personality)}
-                            </AvatarFallback>
-                          </Avatar>
+                {assistants.map((assistant, index) => (
+                  <Card key={assistant.id} className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+                    <CardContent className="p-4 lg:p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                        <div className="flex items-start space-x-4 flex-1 min-w-0">
+                          <div className="relative flex-shrink-0">
+                            <Avatar className="h-12 w-12 lg:h-14 lg:w-14 ring-2 ring-violet-400/50 bg-gradient-to-br from-violet-500 to-purple-600">
+                              <AvatarFallback className="text-white font-semibold text-lg bg-gradient-to-br from-violet-500 to-purple-600">
+                                {getPersonalityIcon(assistant.personality)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full flex items-center justify-center">
+                              <Sparkles className="h-2 w-2 text-white" />
+                            </div>
+                          </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-lg font-semibold text-slate-900 truncate">
+                            <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mb-2">
+                              <h3 className="text-lg font-semibold text-white truncate">
                                 {assistant.name}
                               </h3>
                               <Badge 
                                 variant={assistant.is_published ? "default" : "secondary"}
                                 className={assistant.is_published 
-                                  ? "bg-green-100 text-green-700 border-green-200" 
-                                  : "bg-gray-100 text-gray-700 border-gray-200"
+                                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-lg" 
+                                  : "bg-white/10 text-violet-200 border-white/20"
                                 }
                               >
                                 {assistant.is_published ? (
@@ -287,21 +375,21 @@ const Dashboard = () => {
                               </Badge>
                             </div>
                             
-                            <p className="text-slate-600 mb-3">{assistant.subject}</p>
+                            <p className="text-violet-300 mb-3 text-sm lg:text-base">{assistant.subject}</p>
                             
                             <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                              <Badge className="bg-violet-500/20 text-violet-200 border-violet-400/30 text-xs">
                                 {getPersonalityLabel(assistant.personality)}
                               </Badge>
                               
                               {assistant.guardrails?.citationMode && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                <Badge className="bg-blue-500/20 text-blue-200 border-blue-400/30 text-xs">
                                   📚 Cita Fontes
                                 </Badge>
                               )}
                               
                               {assistant.guardrails?.antiCheatMode && (
-                                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                <Badge className="bg-orange-500/20 text-orange-200 border-orange-400/30 text-xs">
                                   🛡️ Anti-Cola
                                 </Badge>
                               )}
@@ -309,13 +397,14 @@ const Dashboard = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-2 ml-4">
+                        {/* Actions */}
+                        <div className="flex items-center justify-end lg:justify-start space-x-2 flex-shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleTogglePublish(assistant.id, assistant.is_published)}
                             disabled={updatingAssistant === assistant.id}
-                            className="text-slate-600 hover:text-indigo-600"
+                            className="text-violet-300 hover:text-white hover:bg-white/10 p-2"
                           >
                             {assistant.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
@@ -325,20 +414,20 @@ const Dashboard = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => copyShareLink(assistant.id, assistant.name)}
-                              className="text-slate-600 hover:text-green-600"
+                              className="text-violet-300 hover:text-white hover:bg-white/10 p-2"
                             >
                               <Share2 className="h-4 w-4" />
                             </Button>
                           )}
                           
                           <Link to={`/assistant/${assistant.id}/analytics`}>
-                            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-purple-600">
+                            <Button variant="ghost" size="sm" className="text-violet-300 hover:text-white hover:bg-white/10 p-2">
                               <BarChart3 className="h-4 w-4" />
                             </Button>
                           </Link>
                           
                           <Link to={`/assistant/${assistant.id}/edit`}>
-                            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
+                            <Button variant="ghost" size="sm" className="text-violet-300 hover:text-white hover:bg-white/10 p-2">
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -347,7 +436,7 @@ const Dashboard = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteAssistant(assistant.id, assistant.name)}
-                            className="text-slate-600 hover:text-red-600"
+                            className="text-violet-300 hover:text-red-400 hover:bg-red-500/10 p-2"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -358,19 +447,19 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
-                <CardContent className="text-center py-12">
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bot className="h-10 w-10 text-indigo-600" />
+              <Card className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl">
+                <CardContent className="text-center py-12 lg:py-16">
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Bot className="h-10 w-10 lg:h-12 lg:w-12 text-violet-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-slate-900 mb-2">
-                    Nenhum assistente criado ainda
+                  <h3 className="text-xl font-semibold text-white mb-3">
+                    Seu primeiro assistente premium
                   </h3>
-                  <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                    Crie seu primeiro assistente de IA para começar a personalizar a experiência de aprendizado dos seus estudantes.
+                  <p className="text-violet-300 mb-8 max-w-md mx-auto text-sm lg:text-base">
+                    Crie seu primeiro assistente de IA e comece a transformar a experiência de aprendizado dos seus estudantes.
                   </p>
                   <Link to="/create-assistant">
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-2xl border-0 px-8 py-3">
                       <Plus className="h-4 w-4 mr-2" />
                       Criar Primeiro Assistente
                     </Button>
@@ -380,25 +469,25 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* Premium Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Zap className="h-5 w-5 mr-2 text-indigo-600" />
+            <Card className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center text-white">
+                  <Zap className="h-5 w-5 mr-2 text-violet-400" />
                   Ações Rápidas
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link to="/create-assistant" className="block">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start bg-white/5 border-white/20 text-violet-200 hover:bg-white/10 hover:text-white transition-all duration-300">
                     <Plus className="h-4 w-4 mr-2" />
                     Novo Assistente
                   </Button>
                 </Link>
                 <Link to="/transparency" className="block">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start bg-white/5 border-white/20 text-violet-200 hover:bg-white/10 hover:text-white transition-all duration-300">
                     <Settings className="h-4 w-4 mr-2" />
                     Transparência da IA
                   </Button>
@@ -406,43 +495,42 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Activity */}
-            <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-purple-600" />
-                  Atividade Recente
+            {/* Premium Activity Feed */}
+            <Card className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center text-white">
+                  <TrendingUp className="h-5 w-5 mr-2 text-purple-400" />
+                  Atividade Premium
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <p className="text-sm text-slate-600">23 interações nos últimos 7 dias</p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <p className="text-sm text-slate-600">2 novos feedbacks positivos</p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <p className="text-sm text-slate-600">1 assistente publicado hoje</p>
-                  </div>
+                <div className="space-y-4">
+                  {[
+                    { icon: "🚀", text: "23 interações nos últimos 7 dias", color: "from-green-400 to-emerald-500" },
+                    { icon: "⭐", text: "2 novos feedbacks positivos", color: "from-blue-400 to-cyan-500" },
+                    { icon: "✨", text: "1 assistente publicado hoje", color: "from-purple-400 to-pink-500" }
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300">
+                      <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${item.color}`}></div>
+                      <p className="text-sm text-violet-200 flex-1">{item.text}</p>
+                      <span className="text-lg">{item.icon}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Tips */}
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center text-amber-900">
+            {/* Premium Tip */}
+            <Card className="border-0 bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-xl shadow-2xl border border-amber-400/20">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center text-amber-200">
                   <Sparkles className="h-5 w-5 mr-2" />
-                  Dica do Dia
+                  Dica Premium
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-amber-800">
-                  💡 Use o modo "transparência" para que os estudantes vejam como a IA chegou às respostas, promovendo maior confiança e aprendizado.
+                <p className="text-sm text-amber-100 leading-relaxed">
+                  💎 Use o modo "transparência" para que os estudantes vejam como a IA chegou às respostas, criando uma experiência de aprendizado mais confiável e engajadora.
                 </p>
               </CardContent>
             </Card>
