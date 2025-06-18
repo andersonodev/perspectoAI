@@ -1,6 +1,5 @@
 
 import { useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface DecisionLog {
   decision_type: string;
@@ -19,19 +18,16 @@ export const useAITransparency = (assistantId: string, sessionId: string) => {
     inputFactors: any = {}
   ) => {
     try {
-      const { error } = await supabase
-        .from('ai_decision_logs')
-        .insert({
-          assistant_id: assistantId,
-          session_id: sessionId,
-          message_id: messageId,
-          decision_type: decisionType,
-          reasoning,
-          confidence_score: confidenceScore,
-          input_factors: inputFactors
-        });
-
-      if (error) throw error;
+      // For now, just log to console until the table is created
+      console.log('AI Decision Log:', {
+        assistantId,
+        sessionId,
+        messageId,
+        decisionType,
+        reasoning,
+        confidenceScore,
+        inputFactors
+      });
     } catch (error) {
       console.error('Error logging AI decision:', error);
     }
@@ -39,21 +35,8 @@ export const useAITransparency = (assistantId: string, sessionId: string) => {
 
   const getDecisionLogs = useCallback(async (messageId?: string) => {
     try {
-      let query = supabase
-        .from('ai_decision_logs')
-        .select('*')
-        .eq('assistant_id', assistantId)
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: false });
-
-      if (messageId) {
-        query = query.eq('message_id', messageId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      return data || [];
+      // Return empty array for now until the table is created
+      return [];
     } catch (error) {
       console.error('Error getting decision logs:', error);
       return [];

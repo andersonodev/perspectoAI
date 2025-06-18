@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface MemoryEntry {
   id: string;
@@ -26,49 +25,24 @@ export const useAssistantMemory = (assistantId: string, sessionId: string) => {
     confidenceScore: number = 0.8
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // For now, just log to console and save to localStorage until the table is created
+      const memoryData = {
+        assistantId,
+        sessionId,
+        type,
+        key,
+        value,
+        confidenceScore,
+        timestamp: new Date().toISOString()
+      };
       
-      // Check if memory already exists
-      const { data: existing } = await supabase
-        .from('assistant_memory')
-        .select('*')
-        .eq('assistant_id', assistantId)
-        .eq('user_id', user?.id || null)
-        .eq('session_id', sessionId)
-        .eq('memory_type', type)
-        .eq('key', key)
-        .single();
-
-      if (existing) {
-        // Update existing memory
-        const { error } = await supabase
-          .from('assistant_memory')
-          .update({
-            value,
-            confidence_score: confidenceScore,
-            last_updated: new Date().toISOString()
-          })
-          .eq('id', existing.id);
-
-        if (error) throw error;
-      } else {
-        // Create new memory
-        const { error } = await supabase
-          .from('assistant_memory')
-          .insert({
-            assistant_id: assistantId,
-            user_id: user?.id || null,
-            session_id: sessionId,
-            memory_type: type,
-            key,
-            value,
-            confidence_score: confidenceScore
-          });
-
-        if (error) throw error;
-      }
-
-      await loadMemories();
+      console.log('Saving memory:', memoryData);
+      
+      // Save to localStorage as fallback
+      const storageKey = `memory_${assistantId}_${sessionId}_${type}_${key}`;
+      localStorage.setItem(storageKey, JSON.stringify(memoryData));
+      
+      return memoryData;
     } catch (error) {
       console.error('Error saving memory:', error);
     }
@@ -77,18 +51,8 @@ export const useAssistantMemory = (assistantId: string, sessionId: string) => {
   const loadMemories = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      const { data, error } = await supabase
-        .from('assistant_memory')
-        .select('*')
-        .eq('assistant_id', assistantId)
-        .eq('user_id', user?.id || null)
-        .eq('session_id', sessionId)
-        .order('last_updated', { ascending: false });
-
-      if (error) throw error;
-      setMemories(data || []);
+      // For now, return empty array until the table is created
+      setMemories([]);
     } catch (error) {
       console.error('Error loading memories:', error);
     } finally {
@@ -97,8 +61,18 @@ export const useAssistantMemory = (assistantId: string, sessionId: string) => {
   }, [assistantId, sessionId]);
 
   const getMemory = useCallback((type: string, key: string) => {
-    return memories.find(m => m.memory_type === type && m.key === key);
-  }, [memories]);
+    // Try to get from localStorage as fallback
+    const storageKey = `memory_${assistantId}_${sessionId}_${type}_${key}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (error) {
+        console.error('Error parsing stored memory:', error);
+      }
+    }
+    return null;
+  }, [assistantId, sessionId]);
 
   const analyzeUserPreferences = useCallback(async (messages: any[]) => {
     // Analyze user messages to extract preferences

@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 interface UserProfile {
@@ -33,37 +32,40 @@ export const useXPSystem = () => {
 
   const loadUserProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // For now, create a mock profile until the table is created
+      const mockProfile: UserProfile = {
+        id: 'mock-id',
+        user_id: 'mock-user-id',
+        display_name: 'Estudante',
+        total_xp: 100,
+        level: 2,
+        badges: [
+          {
+            id: 'first_message',
+            name: 'Primeira Conversa',
+            description: 'Enviou sua primeira mensagem',
+            icon: '💬',
+            earned_at: new Date().toISOString()
+          }
+        ],
+        preferences: { theme: 'light', language: 'pt' },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      let { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create one
-        const { data: newProfile, error: createError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: user.id,
-            display_name: user.email?.split('@')[0] || 'Estudante',
-            total_xp: 0,
-            level: 1,
-            badges: [],
-            preferences: { theme: 'light', language: 'pt' }
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        profile = newProfile;
-      } else if (error) {
-        throw error;
+      // Try to load from localStorage
+      const stored = localStorage.getItem('user_profile');
+      if (stored) {
+        try {
+          const parsedProfile = JSON.parse(stored);
+          setProfile({ ...mockProfile, ...parsedProfile });
+        } catch (error) {
+          setProfile(mockProfile);
+        }
+      } else {
+        setProfile(mockProfile);
+        localStorage.setItem('user_profile', JSON.stringify(mockProfile));
       }
-
-      setProfile(profile);
     } catch (error) {
       console.error('Error loading user profile:', error);
     } finally {
@@ -73,38 +75,26 @@ export const useXPSystem = () => {
 
   const awardXP = async (amount: number, activityType: string, metadata: any = {}) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !profile) return;
+      if (!profile) return;
 
-      // Record activity
-      await supabase
-        .from('user_activities')
-        .insert({
-          user_id: user.id,
-          activity_type: activityType,
-          xp_earned: amount,
-          metadata
-        });
+      console.log('Awarding XP:', { amount, activityType, metadata });
 
       const newXP = profile.total_xp + amount;
       const newLevel = Math.floor(newXP / 100) + 1;
       const leveledUp = newLevel > profile.level;
 
       // Update profile
-      const { data: updatedProfile, error } = await supabase
-        .from('user_profiles')
-        .update({
-          total_xp: newXP,
-          level: newLevel,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const updatedProfile = {
+        ...profile,
+        total_xp: newXP,
+        level: newLevel,
+        updated_at: new Date().toISOString()
+      };
 
       setProfile(updatedProfile);
+      
+      // Save to localStorage
+      localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
 
       // Check for new badges
       await checkForNewBadges(newXP, newLevel, activityType);
@@ -147,21 +137,14 @@ export const useXPSystem = () => {
     };
 
     const updatedBadges = [...profile.badges, newBadge];
+    const updatedProfile = {
+      ...profile,
+      badges: updatedBadges,
+      updated_at: new Date().toISOString()
+    };
 
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({
-        badges: updatedBadges,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', profile.user_id);
-
-    if (error) {
-      console.error('Error awarding badge:', error);
-      return;
-    }
-
-    setProfile(prev => prev ? { ...prev, badges: updatedBadges } : null);
+    setProfile(updatedProfile);
+    localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
 
     toast({
       title: "🏆 Nova Conquista!",
