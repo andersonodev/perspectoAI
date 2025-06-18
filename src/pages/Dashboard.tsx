@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,26 +134,26 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-violet-400/30 border-t-violet-400 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-violet-200 font-medium">Carregando seu workspace premium...</p>
+          <div className="w-16 h-16 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-blue-700 font-medium">Carregando seu workspace...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
-      {/* Premium Header */}
-      <header className="relative z-50 backdrop-blur-xl bg-white/5 border-b border-white/10 shadow-2xl">
+      {/* Header */}
+      <header className="relative z-50 bg-white/80 backdrop-blur-xl border-b border-blue-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
@@ -165,11 +164,11 @@ const Dashboard = () => {
                     alt="Mentor AI" 
                     className="h-10 w-auto drop-shadow-lg"
                   />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full animate-pulse"></div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full animate-pulse"></div>
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-lg font-bold bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent">
-                    Premium Workspace
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+                    Workspace Educador
                   </h1>
                 </div>
               </div>
@@ -181,7 +180,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-violet-200 hover:text-white hover:bg-white/10"
+                className="text-blue-700 hover:text-blue-900 hover:bg-blue-100"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
@@ -191,27 +190,27 @@ const Dashboard = () => {
             <div className="hidden lg:flex items-center space-x-6">
               <div className="flex items-center space-x-4">
                 <div className="relative">
-                  <Avatar className="h-10 w-10 ring-2 ring-violet-400/50 shadow-lg bg-gradient-to-br from-violet-500 to-purple-600">
-                    <AvatarFallback className="text-white font-semibold bg-gradient-to-br from-violet-500 to-purple-600">
+                  <Avatar className="h-10 w-10 ring-2 ring-blue-300 shadow-lg bg-gradient-to-br from-blue-500 to-emerald-500">
+                    <AvatarFallback className="text-white font-semibold bg-gradient-to-br from-blue-500 to-emerald-500">
                       {user?.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
-                    <Crown className="h-2 w-2 text-yellow-900" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full flex items-center justify-center">
+                    <Crown className="h-2 w-2 text-orange-900" />
                   </div>
                 </div>
                 <div className="text-sm">
-                  <p className="font-semibold text-violet-100">{user?.email}</p>
-                  <p className="text-violet-300 flex items-center gap-1">
+                  <p className="font-semibold text-blue-900">{user?.email}</p>
+                  <p className="text-blue-700 flex items-center gap-1">
                     <Gem className="h-3 w-3" />
-                    Educador Premium
+                    Educador Pro
                   </p>
                 </div>
               </div>
               <Button 
                 variant="ghost" 
                 onClick={handleSignOut} 
-                className="text-violet-200 hover:text-white hover:bg-white/10 transition-all duration-300"
+                className="text-blue-700 hover:text-blue-900 hover:bg-blue-100 transition-all duration-300"
               >
                 Sair
               </Button>
@@ -220,25 +219,25 @@ const Dashboard = () => {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-white/10 py-4 backdrop-blur-xl bg-white/5">
+            <div className="lg:hidden border-t border-blue-200 py-4 bg-white/80 backdrop-blur-xl">
               <div className="flex items-center space-x-4 mb-4">
-                <Avatar className="h-8 w-8 ring-2 ring-violet-400/50 bg-gradient-to-br from-violet-500 to-purple-600">
-                  <AvatarFallback className="text-white text-sm bg-gradient-to-br from-violet-500 to-purple-600">
+                <Avatar className="h-8 w-8 ring-2 ring-blue-300 bg-gradient-to-br from-blue-500 to-emerald-500">
+                  <AvatarFallback className="text-white text-sm bg-gradient-to-br from-blue-500 to-emerald-500">
                     {user?.email?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-sm">
-                  <p className="font-medium text-violet-100">{user?.email}</p>
-                  <p className="text-violet-300 text-xs flex items-center gap-1">
+                  <p className="font-medium text-blue-900">{user?.email}</p>
+                  <p className="text-blue-700 text-xs flex items-center gap-1">
                     <Gem className="h-2 w-2" />
-                    Educador Premium
+                    Educador Pro
                   </p>
                 </div>
               </div>
               <Button 
                 variant="ghost" 
                 onClick={handleSignOut}
-                className="w-full justify-start text-violet-200 hover:text-white hover:bg-white/10"
+                className="w-full justify-start text-blue-700 hover:text-blue-900 hover:bg-blue-100"
               >
                 Sair
               </Button>
@@ -248,19 +247,19 @@ const Dashboard = () => {
       </header>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        {/* Premium Welcome Section */}
+        {/* Welcome Section */}
         <div className="mb-8 text-center lg:text-left">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-violet-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent mb-2">
-                Bem-vindo ao seu Workspace Premium ✨
+              <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 via-emerald-600 to-blue-700 bg-clip-text text-transparent mb-2">
+                Bem-vindo ao seu Workspace Educador ✨
               </h1>
-              <p className="text-violet-300 max-w-2xl">
+              <p className="text-blue-700 max-w-2xl">
                 Crie experiências de aprendizado extraordinárias com tecnologia de ponta em IA educacional.
               </p>
             </div>
             <Link to="/create-assistant" className="lg:flex-shrink-0">
-              <Button className="w-full lg:w-auto bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-2xl hover:shadow-violet-500/25 transition-all duration-300 border-0 px-8 py-3">
+              <Button className="w-full lg:w-auto bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 border-0 px-8 py-3">
                 <Plus className="h-5 w-5 mr-2" />
                 Criar Assistente
               </Button>
@@ -268,51 +267,51 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Premium Stats Grid */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
           {[
             { 
               title: "Assistentes", 
               value: assistants?.length || 0, 
               icon: Bot, 
-              gradient: "from-violet-500 to-purple-600",
-              iconBg: "bg-violet-500/20",
-              textColor: "text-violet-100"
+              gradient: "from-blue-500 to-blue-600",
+              iconBg: "bg-blue-500/20",
+              textColor: "text-blue-900"
             },
             { 
               title: "Publicados", 
               value: assistants?.filter(a => a.is_published).length || 0, 
               icon: Eye, 
-              gradient: "from-purple-500 to-pink-600",
-              iconBg: "bg-purple-500/20",
-              textColor: "text-purple-100"
+              gradient: "from-emerald-500 to-emerald-600",
+              iconBg: "bg-emerald-500/20",
+              textColor: "text-emerald-900"
             },
             { 
               title: "Interações", 
               value: "127", 
               icon: MessageSquare, 
-              gradient: "from-pink-500 to-rose-600",
-              iconBg: "bg-pink-500/20",
-              textColor: "text-pink-100"
+              gradient: "from-purple-500 to-purple-600",
+              iconBg: "bg-purple-500/20",
+              textColor: "text-purple-900"
             },
             { 
               title: "Satisfação", 
               value: "94%", 
               icon: Star, 
-              gradient: "from-rose-500 to-orange-600",
-              iconBg: "bg-rose-500/20",
-              textColor: "text-rose-100"
+              gradient: "from-orange-500 to-orange-600",
+              iconBg: "bg-orange-500/20",
+              textColor: "text-orange-900"
             }
           ].map((stat, index) => (
-            <Card key={index} className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+            <Card key={index} className="border-0 bg-white/80 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300 group border border-white/50">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className={`text-xs lg:text-sm ${stat.textColor} opacity-80 mb-1`}>{stat.title}</p>
-                    <p className="text-xl lg:text-2xl font-bold text-white">{stat.value}</p>
+                    <p className="text-xl lg:text-2xl font-bold text-gray-900">{stat.value}</p>
                   </div>
                   <div className={`${stat.iconBg} p-2 lg:p-3 rounded-xl group-hover:scale-110 transition-transform duration-300`}>
-                    <stat.icon className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
+                    <stat.icon className="h-5 w-5 lg:h-6 lg:w-6 text-gray-700" />
                   </div>
                 </div>
               </CardContent>
@@ -325,8 +324,8 @@ const Dashboard = () => {
           {/* Assistants Section */}
           <div className="xl:col-span-2">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-                <Palette className="h-6 w-6 text-violet-400" />
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Palette className="h-6 w-6 text-blue-600" />
                 Meus Assistentes
               </h2>
             </div>
@@ -334,13 +333,13 @@ const Dashboard = () => {
             {assistants && assistants.length > 0 ? (
               <div className="space-y-4">
                 {assistants.map((assistant, index) => (
-                  <Card key={assistant.id} className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+                  <Card key={assistant.id} className="border-0 bg-white/80 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300 group border border-white/50">
                     <CardContent className="p-4 lg:p-6">
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="flex items-start space-x-4 flex-1 min-w-0">
                           <div className="relative flex-shrink-0">
-                            <Avatar className="h-12 w-12 lg:h-14 lg:w-14 ring-2 ring-violet-400/50 bg-gradient-to-br from-violet-500 to-purple-600">
-                              <AvatarFallback className="text-white font-semibold text-lg bg-gradient-to-br from-violet-500 to-purple-600">
+                            <Avatar className="h-12 w-12 lg:h-14 lg:w-14 ring-2 ring-blue-300 bg-gradient-to-br from-blue-500 to-emerald-500">
+                              <AvatarFallback className="text-white font-semibold text-lg bg-gradient-to-br from-blue-500 to-emerald-500">
                                 {getPersonalityIcon(assistant.personality)}
                               </AvatarFallback>
                             </Avatar>
@@ -351,7 +350,7 @@ const Dashboard = () => {
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mb-2">
-                              <h3 className="text-lg font-semibold text-white truncate">
+                              <h3 className="text-lg font-semibold text-gray-900 truncate">
                                 {assistant.name}
                               </h3>
                               <Badge 
@@ -447,19 +446,19 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <Card className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl">
+              <Card className="border-0 bg-white/80 backdrop-blur-xl shadow-lg border border-white/50">
                 <CardContent className="text-center py-12 lg:py-16">
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Bot className="h-10 w-10 lg:h-12 lg:w-12 text-violet-400" />
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-500/20 to-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Bot className="h-10 w-10 lg:h-12 lg:w-12 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">
-                    Seu primeiro assistente premium
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    Seu primeiro assistente
                   </h3>
-                  <p className="text-violet-300 mb-8 max-w-md mx-auto text-sm lg:text-base">
+                  <p className="text-blue-700 mb-8 max-w-md mx-auto text-sm lg:text-base">
                     Crie seu primeiro assistente de IA e comece a transformar a experiência de aprendizado dos seus estudantes.
                   </p>
                   <Link to="/create-assistant">
-                    <Button className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-2xl border-0 px-8 py-3">
+                    <Button className="bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 text-white shadow-xl border-0 px-8 py-3">
                       <Plus className="h-4 w-4 mr-2" />
                       Criar Primeiro Assistente
                     </Button>
@@ -469,25 +468,25 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Premium Sidebar */}
+          {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <Card className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl">
+            <Card className="border-0 bg-white/80 backdrop-blur-xl shadow-lg border border-white/50">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center text-white">
-                  <Zap className="h-5 w-5 mr-2 text-violet-400" />
+                <CardTitle className="text-lg flex items-center text-gray-900">
+                  <Zap className="h-5 w-5 mr-2 text-blue-600" />
                   Ações Rápidas
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link to="/create-assistant" className="block">
-                  <Button variant="outline" className="w-full justify-start bg-white/5 border-white/20 text-violet-200 hover:bg-white/10 hover:text-white transition-all duration-300">
+                  <Button variant="outline" className="w-full justify-start bg-white/80 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-900 transition-all duration-300">
                     <Plus className="h-4 w-4 mr-2" />
                     Novo Assistente
                   </Button>
                 </Link>
                 <Link to="/transparency" className="block">
-                  <Button variant="outline" className="w-full justify-start bg-white/5 border-white/20 text-violet-200 hover:bg-white/10 hover:text-white transition-all duration-300">
+                  <Button variant="outline" className="w-full justify-start bg-white/80 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-900 transition-all duration-300">
                     <Settings className="h-4 w-4 mr-2" />
                     Transparência da IA
                   </Button>
@@ -495,24 +494,24 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Premium Activity Feed */}
-            <Card className="border-0 bg-white/5 backdrop-blur-xl shadow-2xl">
+            {/* Activity Feed */}
+            <Card className="border-0 bg-white/80 backdrop-blur-xl shadow-lg border border-white/50">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center text-white">
-                  <TrendingUp className="h-5 w-5 mr-2 text-purple-400" />
-                  Atividade Premium
+                <CardTitle className="text-lg flex items-center text-gray-900">
+                  <TrendingUp className="h-5 w-5 mr-2 text-emerald-600" />
+                  Atividade Recente
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { icon: "🚀", text: "23 interações nos últimos 7 dias", color: "from-green-400 to-emerald-500" },
-                    { icon: "⭐", text: "2 novos feedbacks positivos", color: "from-blue-400 to-cyan-500" },
-                    { icon: "✨", text: "1 assistente publicado hoje", color: "from-purple-400 to-pink-500" }
+                    { icon: "🚀", text: "23 interações nos últimos 7 dias", color: "from-emerald-400 to-emerald-500" },
+                    { icon: "⭐", text: "2 novos feedbacks positivos", color: "from-blue-400 to-blue-500" },
+                    { icon: "✨", text: "1 assistente publicado hoje", color: "from-purple-400 to-purple-500" }
                   ].map((item, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300">
+                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 hover:bg-white/80 transition-all duration-300">
                       <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${item.color}`}></div>
-                      <p className="text-sm text-violet-200 flex-1">{item.text}</p>
+                      <p className="text-sm text-gray-700 flex-1">{item.text}</p>
                       <span className="text-lg">{item.icon}</span>
                     </div>
                   ))}
@@ -520,17 +519,17 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Premium Tip */}
-            <Card className="border-0 bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-xl shadow-2xl border border-amber-400/20">
+            {/* Tip */}
+            <Card className="border-0 bg-gradient-to-br from-orange-100 to-yellow-100 backdrop-blur-xl shadow-lg border border-orange-200">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center text-amber-200">
+                <CardTitle className="text-lg flex items-center text-orange-900">
                   <Sparkles className="h-5 w-5 mr-2" />
-                  Dica Premium
+                  Dica Pro
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-amber-100 leading-relaxed">
-                  💎 Use o modo "transparência" para que os estudantes vejam como a IA chegou às respostas, criando uma experiência de aprendizado mais confiável e engajadora.
+                <p className="text-sm text-orange-800 leading-relaxed">
+                  💡 Use o modo "transparência" para que os estudantes vejam como a IA chegou às respostas, criando uma experiência de aprendizado mais confiável.
                 </p>
               </CardContent>
             </Card>

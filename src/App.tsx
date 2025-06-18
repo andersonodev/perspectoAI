@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,8 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+import AuthWithRoles from "./pages/AuthWithRoles";
 import Dashboard from "./pages/Dashboard";
+import StudentDashboard from "./pages/StudentDashboard";
 import CreateAssistant from "./pages/CreateAssistant";
 import EditAssistant from "./pages/EditAssistant";
 import StudentChat from "./pages/StudentChat";
@@ -22,8 +24,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-blue-700 font-medium">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -41,13 +46,18 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-blue-700 font-medium">Carregando...</p>
+        </div>
       </div>
     );
   }
   
   if (user) {
+    // Here we would check user role and redirect accordingly
+    // For now, redirect educators to dashboard and students to student dashboard
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -64,13 +74,18 @@ const AppRoutes = () => {
       } />
       <Route path="/auth" element={
         <PublicRoute>
-          <Auth />
+          <AuthWithRoles />
         </PublicRoute>
       } />
       <Route path="/transparency" element={<Transparency />} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/student-dashboard" element={
+        <ProtectedRoute>
+          <StudentDashboard />
         </ProtectedRoute>
       } />
       <Route path="/create-assistant" element={

@@ -3,92 +3,79 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium Design System - Glassmorphism & Gradient Enhanced */
+/* New Study-Focused Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* New Blue-Green Palette */
+    --background: 245 250 255;
+    --foreground: 15 23 42;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary Blues */
+    --primary: 59 130 246;
+    --primary-foreground: 255 255 255;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary Greens */
+    --secondary: 240 253 244;
+    --secondary-foreground: 22 101 52;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 248 250 252;
+    --muted-foreground: 100 116 139;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 236 254 255;
+    --accent-foreground: 22 101 52;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 59 130 246;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Premium Gradient Variables */
-    --premium-violet: 262 73% 60%;
-    --premium-purple: 280 80% 65%;
-    --premium-indigo: 245 75% 65%;
+    /* Study-focused colors */
+    --study-blue: 59 130 246;
+    --study-green: 34 197 94;
+    --study-purple: 147 51 234;
+    --study-orange: 251 146 60;
+    --study-gray: 71 85 105;
   }
 
   .dark {
-    --background: 262 80% 4%;
-    --foreground: 262 20% 95%;
+    --background: 2 6 23;
+    --foreground: 226 232 240;
 
-    --card: 262 50% 8%;
-    --card-foreground: 262 20% 95%;
+    --card: 15 23 42;
+    --card-foreground: 226 232 240;
 
-    --popover: 262 50% 8%;
-    --popover-foreground: 262 20% 95%;
+    --popover: 15 23 42;
+    --popover-foreground: 226 232 240;
 
-    --primary: 262 80% 70%;
-    --primary-foreground: 262 80% 10%;
+    --primary: 96 165 250;
+    --primary-foreground: 15 23 42;
 
-    --secondary: 262 30% 15%;
-    --secondary-foreground: 262 20% 85%;
+    --secondary: 22 78 99;
+    --secondary-foreground: 165 243 252;
 
-    --muted: 262 30% 15%;
-    --muted-foreground: 262 15% 60%;
+    --muted: 30 41 59;
+    --muted-foreground: 148 163 184;
 
-    --accent: 262 30% 18%;
-    --accent-foreground: 262 20% 85%;
+    --accent: 22 78 99;
+    --accent-foreground: 165 243 252;
 
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 248 113 113;
+    --destructive-foreground: 15 23 42;
 
-    --border: 262 30% 18%;
-    --input: 262 30% 18%;
-    --ring: 262 80% 70%;
-
-    --sidebar-background: 262 60% 8%;
-    --sidebar-foreground: 262 20% 85%;
-    --sidebar-primary: 262 80% 70%;
-    --sidebar-primary-foreground: 262 80% 10%;
-    --sidebar-accent: 262 40% 15%;
-    --sidebar-accent-foreground: 262 20% 85%;
-    --sidebar-border: 262 40% 15%;
-    --sidebar-ring: 262 80% 70%;
+    --border: 30 41 59;
+    --input: 30 41 59;
+    --ring: 96 165 250;
   }
 }
 
@@ -100,118 +87,179 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
-  /* Premium Scrollbar */
+  /* Clean Scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    @apply bg-gray-100;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-white/20 rounded-full;
+    @apply bg-gray-300 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/30;
+    @apply bg-gray-400;
   }
 }
 
-/* Premium Glassmorphism Components */
+/* Study-Focused Components */
 @layer components {
-  .glass-card {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl;
+  .study-card {
+    @apply bg-white/80 backdrop-blur-sm border border-blue-200 shadow-lg rounded-xl;
   }
 
-  .glass-button {
-    @apply backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-300;
+  .study-button-blue {
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
-  .premium-gradient-text {
-    @apply bg-gradient-to-r from-violet-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent;
+  .study-button-green {
+    @apply bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
-  .premium-gradient-bg {
-    @apply bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950;
+  .study-button-purple {
+    @apply bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
-  .floating-animation {
-    animation: float 6s ease-in-out infinite;
+  .study-button-orange {
+    @apply bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
-  .glow-effect {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.1);
+  .study-gradient-bg {
+    @apply bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100;
+  }
+
+  .educator-gradient {
+    @apply bg-gradient-to-br from-blue-500 to-blue-600;
+  }
+
+  .student-gradient {
+    @apply bg-gradient-to-br from-emerald-500 to-emerald-600;
+  }
+
+  .interactive-hover {
+    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-xl;
+  }
+
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+
+  .text-gradient-blue {
+    @apply bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-green {
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent;
   }
 }
 
-/* Premium Animations */
+/* Study Animations */
 @layer utilities {
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-8px); }
   }
 
-  @keyframes glow {
+  @keyframes pulse-soft {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.8; }
   }
 
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+  @keyframes glow-blue {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); }
   }
 
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite;
+  @keyframes glow-green {
+    0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.5); }
   }
 
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 3s infinite;
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
   }
 
-  /* Premium Interactive States */
-  .interactive-card {
-    @apply transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-violet-500/10;
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
   }
 
-  .premium-button {
-    @apply relative overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 
-           text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-violet-500/25 
-           transition-all duration-300 border-0 group;
+  .animate-glow-blue {
+    animation: glow-blue 3s ease-in-out infinite;
   }
 
-  .premium-button::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 
-           transform -skew-x-12 -translate-x-full group-hover:translate-x-full 
-           transition-transform duration-700;
+  .animate-glow-green {
+    animation: glow-green 3s ease-in-out infinite;
+  }
+
+  /* Utility Classes */
+  .shadow-study {
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+  }
+
+  .shadow-study-lg {
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
+  }
+
+  .border-study {
+    @apply border border-blue-200;
+  }
+
+  .bg-study-gradient {
+    background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 50%, #eff6ff 100%);
   }
 }
 
-/* Mobile-First Responsive Enhancements */
+/* Mobile-First Responsive Design */
 @media (max-width: 768px) {
-  .mobile-optimized {
+  .mobile-padding {
     @apply px-4 py-6;
-  }
-  
-  .mobile-card {
-    @apply p-4 rounded-2xl;
   }
   
   .mobile-text {
     @apply text-sm leading-relaxed;
   }
+
+  .mobile-card {
+    @apply p-4 rounded-xl;
+  }
+
+  .mobile-button {
+    @apply px-4 py-3 text-sm;
+  }
 }
 
-/* High-DPI and Retina Display Optimizations */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .retina-optimized {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+/* Focus and Accessibility */
+@layer base {
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  /* High contrast for accessibility */
+  @media (prefers-contrast: high) {
+    .study-card {
+      @apply border-2 border-gray-400;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-hover {
+      @apply transform-none;
+    }
+    
+    .animate-float,
+    .animate-pulse-soft,
+    .animate-glow-blue,
+    .animate-glow-green {
+      animation: none;
+    }
   }
 }
