@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "clean": "rm -rf node_modules package-lock.json && npm install",
+    "clean-install": "rm -rf node_modules package-lock.json && npm install --legacy-peer-deps",
+    "start": "npm run dev"
+  }
+}

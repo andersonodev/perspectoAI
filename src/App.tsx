@@ -1,127 +1,84 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import AuthWithRoles from "./pages/AuthWithRoles";
-import Dashboard from "./pages/Dashboard";
-import StudentDashboard from "./pages/StudentDashboard";
-import CreateAssistant from "./pages/CreateAssistant";
-import EditAssistant from "./pages/EditAssistant";
-import StudentChat from "./pages/StudentChat";
-import AssistantAnalytics from "./pages/AssistantAnalytics";
-import Transparency from "./pages/Transparency";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { Toaster } from '@/components/ui/toaster';
+import UnifiedAuth from '@/pages/UnifiedAuth';
+import Dashboard from '@/pages/Dashboard';
+import StudentDashboard from '@/pages/StudentDashboard';
+import CreateAssistant from '@/pages/CreateAssistant';
 
 const queryClient = new QueryClient();
 
-// Protected Route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+// Protected route component
+const ProtectedRoute: React.FC<{ children: React.ReactNode; role?: 'educator' | 'student' }> = ({ children, role }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-blue-700 font-medium">Carregando...</p>
         </div>
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
+
+  // TODO: Check user role from profile table
+  // For now, redirect based on URL pattern
   return <>{children}</>;
 };
 
-// Public Route component (redirect to dashboard if logged in)
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-blue-100">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-blue-700 font-medium">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (user) {
-    // Here we would check user role and redirect accordingly
-    // For now, redirect educators to dashboard and students to student dashboard
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-const AppRoutes = () => {
+const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={
-        <PublicRoute>
-          <Index />
-        </PublicRoute>
-      } />
-      <Route path="/auth" element={
-        <PublicRoute>
-          <AuthWithRoles />
-        </PublicRoute>
-      } />
-      <Route path="/transparency" element={<Transparency />} />
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/student-dashboard" element={
-        <ProtectedRoute>
-          <StudentDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/create-assistant" element={
-        <ProtectedRoute>
-          <CreateAssistant />
-        </ProtectedRoute>
-      } />
-      <Route path="/assistant/:id/edit" element={
-        <ProtectedRoute>
-          <EditAssistant />
-        </ProtectedRoute>
-      } />
-      <Route path="/assistant/:id/analytics" element={
-        <ProtectedRoute>
-          <AssistantAnalytics />
-        </ProtectedRoute>
-      } />
-      <Route path="/chat/:id" element={<StudentChat />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
+      <Route path="/auth" element={<UnifiedAuth />} />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute role="educator">
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/student-dashboard" 
+        element={
+          <ProtectedRoute role="student">
+            <StudentDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/create-assistant" 
+        element={
+          <ProtectedRoute role="educator">
+            <CreateAssistant />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="/" element={<Navigate to="/auth" replace />} />
+      <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />
+          <Toaster />
         </AuthProvider>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+};
 
 export default App;

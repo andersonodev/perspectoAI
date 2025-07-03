@@ -1,73 +1,141 @@
-# Welcome to your Lovable project
+# Mentor IA - Plataforma Educacional com IA
 
-## Project info
+## 🚀 Novidades da Versão 2.0
 
-**URL**: https://lovable.dev/projects/c95a5392-4987-4c27-b9aa-e01264300f58
+### Épico 1: Onboarding Unificado
+- ✅ **Página única de cadastro** com seleção de perfil (Educador/Estudante)
+- ✅ **Fluxo otimizado** para educadores e estudantes
+- ✅ **Sistema de convites** para turmas com códigos automáticos
+- ✅ **Redirecionamento inteligente** baseado no tipo de usuário
 
-## How can I edit this code?
+### Épico 2: Super-Tutor para Estudantes (Freemium)
+- ✅ **Super-Tutor IA**: Chat inteligente com guardrails anti-cola
+- ✅ **Gerador de Flashcards**: Converte texto/imagens em flashcards (3/mês grátis)
+- ✅ **Mapas Mentais IA**: Cria mapas visuais de conceitos (3/mês grátis)
+- ✅ **Dashboard do Estudante**: Interface dedicada com gamificação
 
-There are several ways of editing your application.
+### Épico 3: Planos Premium (Em Desenvolvimento)
+- 🔄 **Aluno Pro**: Assistentes personalizados ilimitados
+- 🔄 **IA Aprendiz**: Método Feynman com IA que questiona
+- 🔄 **Biblioteca Premium**: Tutores especializados pré-criados
 
-**Use Lovable**
+### Épico 4: Melhorias Visuais
+- ✅ **Contraste aprimorado**: Textos mais legíveis em todos os componentes
+- ✅ **Cores otimizadas**: Fundos e destaques com melhor visibilidade
+- ✅ **Interface responsiva**: Melhor experiência em mobile e desktop
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c95a5392-4987-4c27-b9aa-e01264300f58) and start prompting.
+## 🛠️ Como rodar a aplicação
 
-Changes made via Lovable will be committed automatically to this repo.
+### Opção 1: Setup Automático (Recomendado)
+```bash
+# Torna o script executável
+chmod +x setup.sh
 
-**Use your preferred IDE**
+# Executa o setup automático
+./setup.sh
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Inicia a aplicação
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Opção 2: Setup Manual
+```bash
+# Remove instalação anterior (se houver)
+rm -rf node_modules package-lock.json
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+# Instala com flag legacy-peer-deps para resolver conflitos
+npm install --legacy-peer-deps
 
-**Use GitHub Codespaces**
+# Inicia a aplicação
+npm run dev
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 🔧 Comandos Úteis
+```bash
+# Desenvolvimento
+npm run dev
 
-## What technologies are used for this project?
+# Build para produção
+npm run build
 
-This project is built with:
+# Preview da build
+npm run preview
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Limpeza completa e reinstalação
+npm run clean-install
+```
 
-## How can I deploy this project?
+### 🌐 URLs da Aplicação
+- **Desenvolvimento**: http://localhost:5173
+- **Cadastro Unificado**: http://localhost:5173/auth
+- **Dashboard Educador**: http://localhost:5173/dashboard
+- **Dashboard Estudante**: http://localhost:5173/student-dashboard
 
-Simply open [Lovable](https://lovable.dev/projects/c95a5392-4987-4c27-b9aa-e01264300f58) and click on Share -> Publish.
+## 🎯 Funcionalidades Principais
 
-## Can I connect a custom domain to my Lovable project?
+### Para Educadores
+- Criar assistentes de IA personalizados
+- Gerenciar turmas e estudantes
+- Analytics avançadas de uso
+- Sistema de convites para turmas
+- Upload de materiais didáticos
 
-Yes, you can!
+### Para Estudantes
+- **Super-Tutor IA** com explicações passo a passo
+- **Gerador de Flashcards** inteligente
+- **Mapas Mentais** visuais e interativos
+- Sistema de XP e conquistas
+- Participação em turmas
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔍 Solucionando Problemas
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Erro de Dependências React Three
+Se encontrar erros relacionados ao `@react-three/drei`, use:
+```bash
+npm install --legacy-peer-deps
+```
+
+### Port já em uso
+Se a porta 5173 estiver ocupada, o Vite automaticamente tentará a próxima disponível (5174, 5175, etc.).
+
+### Cache do navegador
+Para limpar cache durante desenvolvimento:
+- **Chrome/Edge**: Ctrl+Shift+R (Windows) ou Cmd+Shift+R (Mac)
+- **Firefox**: Ctrl+F5 (Windows) ou Cmd+Shift+R (Mac)
+
+## 📋 Tecnologias Utilizadas
+
+- **Frontend**: React + TypeScript + Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **State Management**: React Query + Context API
+- **Roteamento**: React Router
+- **Backend**: Supabase
+- **Autenticação**: Supabase Auth
+- **3D/Visualização**: React Three Fiber (opcional)
+
+## 🎨 Estrutura do Projeto
+
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   ├── ui/             # Componentes base (shadcn/ui)
+│   ├── SuperTutorChat/ # Chat do Super-Tutor
+│   ├── FlashcardGenerator/ # Gerador de flashcards
+│   └── MindMapGenerator/   # Gerador de mapas mentais
+├── pages/              # Páginas principais
+│   ├── UnifiedAuth/    # Cadastro unificado
+│   ├── Dashboard/      # Dashboard do educador
+│   ├── StudentDashboard/ # Dashboard do estudante
+│   └── CreateAssistant/  # Criação de assistentes
+├── contexts/           # Contextos React
+├── hooks/              # Hooks customizados
+└── types/              # Tipos TypeScript
+```
+
+## 🚀 Próximos Passos
+
+1. **Integração de Pagamento**: Stripe para planos premium
+2. **IA Aprendiz**: Implementar método Feynman
+3. **Analytics**: Dashboard avançado para educadores
+4. **Mobile App**: Versão nativa React Native
+5. **Integrações**: Google Classroom, Canvas, Moodle
