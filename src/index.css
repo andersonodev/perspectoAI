@@ -329,7 +329,7 @@
   }
 
   .mobile-nav {
-    @apply flex overflow-x-auto scrollbar-hide space-x-2 px-4 py-2;
+    @apply flex overflow-x-auto space-x-2 px-4 py-2;
   }
 
   .mobile-nav::-webkit-scrollbar {
