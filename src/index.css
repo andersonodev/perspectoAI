@@ -344,7 +344,6 @@
     @apply bg-primary text-primary-foreground shadow-lg;
   }
 }
-}
 
 /* Study Animations */
 @layer utilities {
