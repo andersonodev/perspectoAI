@@ -7,6 +7,7 @@ import UnifiedAuth from '@/pages/UnifiedAuth';
 import Dashboard from '@/pages/Dashboard';
 import StudentDashboard from '@/pages/StudentDashboard';
 import CreateAssistant from '@/pages/CreateAssistant';
+import StudentChat from '@/pages/StudentChat';
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,10 @@ const AppRoutes: React.FC = () => {
             <CreateAssistant />
           </ProtectedRoute>
         } 
+      />
+      <Route 
+        path="/chat/:id" 
+        element={<StudentChat />} 
       />
       <Route path="/" element={<Navigate to="/auth" replace />} />
       <Route path="*" element={<Navigate to="/auth" replace />} />
