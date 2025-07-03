@@ -235,56 +235,115 @@
 /* Academic Excellence Components */
 @layer components {
   .academic-card {
-    @apply bg-card border border-border shadow-lg rounded-xl backdrop-blur-sm;
+    @apply bg-card/95 border border-border shadow-2xl rounded-2xl backdrop-blur-md hover:shadow-3xl transition-all duration-500;
+  }
+
+  .mobile-card {
+    @apply p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl;
   }
 
   .educator-button {
-    @apply bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white font-semibold px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105;
   }
 
   .excellence-button {
-    @apply bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105;
   }
 
   .student-button {
-    @apply bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105;
+  }
+
+  .premium-button {
+    @apply bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105;
+  }
+
+  .glass-card {
+    @apply bg-white/10 dark:bg-black/20 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl rounded-2xl;
   }
 
   .academic-gradient-bg {
     background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 50%, hsl(var(--background)) 100%);
   }
 
+  .modern-gradient-bg {
+    background: radial-gradient(ellipse at top, hsl(var(--primary)/0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, hsl(var(--secondary)/0.15) 0%, transparent 50%),
+                linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%);
+  }
+
   .educator-gradient {
-    @apply bg-gradient-to-br from-slate-700 to-slate-800;
+    @apply bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900;
   }
 
   .student-gradient {
-    @apply bg-gradient-to-br from-emerald-600 to-emerald-700;
+    @apply bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800;
   }
 
   .excellence-gradient {
-    @apply bg-gradient-to-br from-amber-600 to-amber-700;
+    @apply bg-gradient-to-br from-amber-600 via-amber-700 to-orange-600;
+  }
+
+  .premium-gradient {
+    @apply bg-gradient-to-br from-purple-600 via-pink-600 to-purple-800;
+  }
+
+  .feature-card {
+    @apply bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-xl rounded-2xl p-4 sm:p-6 backdrop-blur-sm hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300;
+  }
+
+  .mini-feature-card {
+    @apply bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg rounded-xl p-3 sm:p-4 backdrop-blur-sm hover:shadow-xl transform hover:scale-105 transition-all duration-300;
   }
 
   .academic-hover {
-    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-xl;
+    @apply transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl;
+  }
+
+  .mobile-hover {
+    @apply transform transition-all duration-300 active:scale-95 sm:hover:scale-105 sm:hover:shadow-xl;
   }
 
   .academic-glass {
-    @apply bg-card/90 backdrop-blur-sm border border-border/50;
+    @apply bg-card/95 backdrop-blur-md border border-border/50;
+  }
+
+  .floating-element {
+    @apply fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50;
   }
 
   .text-gradient-educator {
-    @apply bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 bg-clip-text text-transparent;
   }
 
   .text-gradient-excellence {
-    @apply bg-gradient-to-r from-amber-600 to-amber-800 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-amber-600 via-amber-700 to-orange-600 bg-clip-text text-transparent;
   }
 
   .text-gradient-student {
-    @apply bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 bg-clip-text text-transparent;
   }
+
+  .text-gradient-premium {
+    @apply bg-gradient-to-r from-purple-600 via-pink-600 to-purple-800 bg-clip-text text-transparent;
+  }
+
+  .mobile-nav {
+    @apply flex overflow-x-auto scrollbar-hide space-x-2 px-4 py-2;
+  }
+
+  .mobile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-pill {
+    @apply flex-shrink-0 px-4 py-2 rounded-full bg-card border border-border text-sm font-medium transition-all duration-300;
+  }
+
+  .nav-pill.active {
+    @apply bg-primary text-primary-foreground shadow-lg;
+  }
+}
 }
 
 /* Study Animations */
