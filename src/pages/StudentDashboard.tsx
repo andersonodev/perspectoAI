@@ -1,11 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Brain, 
   BookOpen, 
@@ -20,25 +20,68 @@ import {
   Menu,
   Bell,
   Home,
-  Filter,
+  Target,
+  Timer,
+  Zap,
+  TrendingUp,
+  Award,
+  Play,
+  Pause,
+  RotateCcw,
   Plus,
-  Download,
-  RefreshCw,
-  Circle,
+  ChevronRight,
+  Flame,
   X,
-  ChevronLeft,
-  ChevronRight
+  Settings,
+  LogOut,
+  Users,
+  Search,
+  Filter,
+  ChevronDown,
+  CheckCircle2,
+  Circle,
+  BookMarked,
+  PenTool,
+  Lightbulb,
+  Calendar as CalendarIcon,
+  Clock3,
+  GraduationCap,
+  BarChart2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import SuperTutorChat from '@/components/SuperTutorChat';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const StudentDashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('home');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(1500); // 25 minutos
+  const [currentStreak, setCurrentStreak] = useState(7);
+  const [weeklyGoal, setWeeklyGoal] = useState(20);
+  const [studiedToday, setStudiedToday] = useState(3.5);
+
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timerActive && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds(seconds => seconds - 1);
+      }, 1000);
+    } else if (timerSeconds === 0) {
+      setTimerActive(false);
+      // Play sound or show notification
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timerSeconds]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -46,303 +89,328 @@ const StudentDashboard = () => {
   };
 
   const sidebarItems = [
-    { id: 'home', icon: Home, label: 'Home', active: activeSection === 'home' },
-    { id: 'planos', icon: BookOpen, label: 'Planos', active: activeSection === 'planos' },
-    { id: 'edital', icon: FileText, label: 'Edital', active: activeSection === 'edital' },
-    { id: 'disciplinas', icon: Brain, label: 'Disciplinas', active: activeSection === 'disciplinas' },
-    { id: 'planejamento', icon: Calendar, label: 'Planejamento', active: activeSection === 'planejamento' },
-    { id: 'revisoes', icon: RefreshCw, label: 'Revisões', active: activeSection === 'revisoes' },
-    { id: 'historico', icon: History, label: 'Histórico', active: activeSection === 'historico' },
-    { id: 'estatisticas', icon: BarChart3, label: 'Estatísticas', active: activeSection === 'estatisticas' }
+    { id: 'dashboard', icon: Home, label: 'Dashboard', color: 'text-blue-500' },
+    { id: 'study', icon: Timer, label: 'Cronômetro', color: 'text-green-500' },
+    { id: 'subjects', icon: BookOpen, label: 'Matérias', color: 'text-purple-500' },
+    { id: 'calendar', icon: CalendarIcon, label: 'Cronograma', color: 'text-orange-500' },
+    { id: 'flashcards', icon: Zap, label: 'Flashcards', color: 'text-yellow-500' },
+    { id: 'practice', icon: Target, label: 'Simulados', color: 'text-red-500' },
+    { id: 'notes', icon: PenTool, label: 'Anotações', color: 'text-indigo-500' },
+    { id: 'stats', icon: BarChart3, label: 'Estatísticas', color: 'text-cyan-500' },
+    { id: 'chat', icon: MessageSquare, label: 'IA Tutor', color: 'text-pink-500' }
   ];
 
-  const materias = [
-    { nome: 'Direito Administrativo', situacao: 'BAIXO', p1: 572, p2: 178, p3: 793, star: true },
-    { nome: 'Direito Constitucional', situacao: 'BAIXO', p1: 409, p2: 178, p3: 596, star: false },
-    { nome: 'Ética', situacao: 'BAIXO', p1: 226, p2: 178, p3: 283, star: true },
-    { nome: 'Legislação', situacao: 'BAIXO', p1: 1084, p2: 178, p3: 863, star: false },
-    { nome: 'Português', situacao: 'BAIXO', p1: 874, p2: 178, p3: 1323, star: true }
+  const subjects = [
+    { name: 'Direito Constitucional', progress: 75, color: 'bg-blue-500', studiedToday: 2.5, nextReview: 'Hoje' },
+    { name: 'Direito Administrativo', progress: 45, color: 'bg-green-500', studiedToday: 1.0, nextReview: 'Amanhã' },
+    { name: 'Português', progress: 90, color: 'bg-purple-500', studiedToday: 0, nextReview: '2 dias' },
+    { name: 'Raciocínio Lógico', progress: 60, color: 'bg-orange-500', studiedToday: 0, nextReview: 'Hoje' },
+    { name: 'Informática', progress: 30, color: 'bg-red-500', studiedToday: 0, nextReview: '3 dias' }
   ];
 
-  const planejamentoData = {
-    ciclosCompletos: 0,
-    progresso: { atual: 0, total: 19 * 60 + 45 },
-    sequenciaEstudos: [
-      { materia: 'Direito Civil', tempo: '0min / 1h00min', cor: 'border-l-red-400' },
-      { materia: 'Direito Empresarial', tempo: '0min / 1h00min', cor: 'border-l-blue-400' },
-      { materia: 'Direito Penal', tempo: '0min / 1h15min', cor: 'border-l-purple-400' },
-      { materia: 'Direito Empresarial', tempo: '0min / 1h00min', cor: 'border-l-blue-400' },
-      { materia: 'Direito Penal', tempo: '0min / 1h00min', cor: 'border-l-purple-400' }
-    ]
-  };
+  const todayTasks = [
+    { subject: 'Direito Constitucional', task: 'Revisão dos Direitos Fundamentais', time: '1h', completed: false, priority: 'high' },
+    { subject: 'Português', task: 'Exercícios de Concordância', time: '30min', completed: true, priority: 'medium' },
+    { subject: 'Raciocínio Lógico', task: 'Problemas de Sequência', time: '45min', completed: false, priority: 'high' },
+    { subject: 'Direito Administrativo', task: 'Atos Administrativos', time: '1h30min', completed: false, priority: 'low' }
+  ];
 
-  const closeSidebar = () => setIsSidebarOpen(false);
+  const weekStats = [
+    { day: 'Seg', hours: 4.5, goal: 3 },
+    { day: 'Ter', hours: 3.2, goal: 3 },
+    { day: 'Qua', hours: 5.1, goal: 3 },
+    { day: 'Qui', hours: 2.8, goal: 3 },
+    { day: 'Sex', hours: 4.0, goal: 3 },
+    { day: 'Sáb', hours: 6.2, goal: 4 },
+    { day: 'Dom', hours: 3.5, goal: 3 }
+  ];
 
   const renderSidebar = () => (
     <>
-      {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={closeSidebar}
+          onClick={() => setIsSidebarOpen(false)}
         />
       )}
       
-      {/* Sidebar */}
       <div className={`
-        fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-green-500 to-green-600 
-        text-white z-50 transform transition-transform duration-300 ease-in-out
+        fixed left-0 top-0 h-full w-72 bg-white dark:bg-gray-900 
+        border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:relative lg:translate-x-0 lg:block lg:w-64
+        lg:relative lg:translate-x-0 lg:block
       `}>
-        <div className="p-4">
+        <div className="p-6">
           <div className="flex items-center justify-between mb-8">
-            <div className="text-xl font-bold">Estudei</div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  PerspectoAI
+                </h1>
+                <p className="text-xs text-gray-500">Estudos</p>
+              </div>
+            </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={closeSidebar}
-              className="lg:hidden text-white hover:bg-white/20"
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
           
-          <nav className="space-y-1">
+          <nav className="space-y-2">
             {sidebarItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
-                  setActiveSection(item.id);
-                  closeSidebar();
+                  setActiveTab(item.id);
+                  setIsSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
-                  item.active 
-                    ? 'bg-white/20 text-white font-medium' 
-                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  activeTab === item.id 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium shadow-sm' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <item.icon className={`h-5 w-5 ${activeTab === item.id ? item.color : ''}`} />
+                <span className="text-sm">{item.label}</span>
               </button>
             ))}
           </nav>
+
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-gray-600 dark:text-gray-300"
+                onClick={() => {}}
+              >
+                <Settings className="h-5 w-5" />
+                <span className="text-sm">Configurações</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-red-600 dark:text-red-400"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="text-sm">Sair</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </>
   );
 
-  const renderHomeContent = () => (
-    <div className="space-y-4">
-      {/* Header com filtros */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4 text-center text-xs">
-            <div className="text-gray-600">Norte</div>
-            <div className="text-gray-600">Nordeste</div>
-            <div className="text-gray-600">C-Oeste</div>
-            <div className="text-gray-600">Sul</div>
-            <div className="text-gray-600">Sudeste</div>
-            <div className="text-gray-600">Federal</div>
-          </div>
-          
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-1 mb-4 text-xs text-center">
-            {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS'].map(estado => (
-              <div key={estado} className="p-2 border rounded text-gray-600 hover:bg-gray-50 cursor-pointer">
-                {estado}
+  const renderDashboard = () => (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Estudado Hoje</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{studiedToday}h</p>
               </div>
-            ))}
-          </div>
-          
-          <div className="flex flex-wrap gap-2 mb-4 text-xs">
-            <div className="bg-green-500 text-white px-3 py-2 rounded cursor-pointer">Concurso Público</div>
-            <div className="px-3 py-2 border rounded text-gray-600 hover:bg-gray-50 cursor-pointer">Enem</div>
-            <div className="px-3 py-2 border rounded text-gray-600 hover:bg-gray-50 cursor-pointer">Vestibular</div>
-            <div className="px-3 py-2 border rounded text-gray-600 hover:bg-gray-50 cursor-pointer">OAB</div>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-2">
-            <select className="flex-1 px-3 py-2 border rounded text-sm">
-              <option>Instituições</option>
-            </select>
-            <select className="flex-1 px-3 py-2 border rounded text-sm">
-              <option>Policial</option>
-            </select>
-            <input type="text" placeholder="Pesquisar..." className="flex-1 px-3 py-2 border rounded text-sm" />
-            <Button className="bg-green-500 hover:bg-green-600 whitespace-nowrap">
-              <Filter className="h-4 w-4 mr-1" />
-              Filtrar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabela de matérias */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Matéria</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Situação</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">P1</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">P2</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">P3</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {materias.map((materia, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{materia.nome}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="destructive" className="text-xs">
-                        {materia.situacao}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{materia.p1}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{materia.p2}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{materia.p3}</td>
-                    <td className="px-4 py-3">
-                      {materia.star && <Star className="h-4 w-4 text-yellow-400 fill-current" />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          <div className="p-6 text-center">
-            <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-            <p className="text-gray-500">Você não tem revisões agendadas para hoje.</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Estudos do dia */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="text-right text-sm text-gray-500 mb-4">
-            ESTUDO DO DIA<br />
-            19/05/2023
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Você ainda não estudou hoje 😊</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderPlanosContent = () => (
-    <div className="space-y-4">
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row items-start gap-4">
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Plus className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Plano Personalizado</h2>
-              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
-                Caso não tenha encontrado seu Edital ou não queira criar um Plano a partir dos nossos Editais,
-                crie um Plano personalizado para adicionar as Disciplinas e Tópicos que desejar.
-              </p>
-              <Button className="bg-green-500 hover:bg-green-600">Criar Plano</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row items-start gap-4">
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Download className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Importar Planilha</h2>
-              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
-                Você também pode criar um Plano a partir dos dados da sua{' '}
-                <span className="text-blue-500 underline cursor-pointer">Planilha do Aprovado</span>, importe agora!
-              </p>
-              <Button className="bg-green-500 hover:bg-green-600">Importar</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderPlanejamentoContent = () => (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Planejamento</h1>
-        <div className="flex flex-col md:flex-row gap-2">
-          <Button variant="outline" size="sm">Recomeçar Ciclo</Button>
-          <Button className="bg-green-500 hover:bg-green-600" size="sm">Editar Planejamento</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Ciclos Completos */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-xs font-medium text-gray-500 mb-4 uppercase">Ciclos Completos</h3>
-            <div className="flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full border-4 border-green-500 flex items-center justify-center">
-                <span className="text-xl font-bold text-green-500">{planejamentoData.ciclosCompletos}</span>
-              </div>
+              <Clock3 className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Progresso */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-xs font-medium text-gray-500 mb-4 uppercase">Progresso</h3>
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">Sequência</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{currentStreak}</p>
+                  <Flame className="h-5 w-5 text-orange-500" />
+                </div>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Meta Semanal</p>
+                <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{Math.round((studiedToday / weeklyGoal) * 100)}%</p>
+              </div>
+              <Target className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Rank</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">#47</p>
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                </div>
+              </div>
+              <Award className="h-8 w-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Study Timer */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5 text-blue-500" />
+              Cronômetro Pomodoro
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="text-center">
-              <div className="text-xs text-gray-600 mb-2">
-                {planejamentoData.progresso.atual}min / {Math.floor(planejamentoData.progresso.total / 60)}h{planejamentoData.progresso.total % 60}min
+              <div className="text-4xl font-mono font-bold text-gray-900 dark:text-gray-100 mb-4">
+                {formatTime(timerSeconds)}
               </div>
-              <Progress value={0} className="mb-2" />
+              <div className="flex justify-center gap-2">
+                <Button
+                  onClick={() => setTimerActive(!timerActive)}
+                  className={timerActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}
+                >
+                  {timerActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTimerActive(false);
+                    setTimerSeconds(1500);
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Foco (25min)</span>
+                <span>Pausa (5min)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" onClick={() => setTimerSeconds(1500)}>25:00</Button>
+                <Button variant="outline" size="sm" onClick={() => setTimerSeconds(300)}>05:00</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Ciclo */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-xs font-medium text-gray-500 mb-4 uppercase">Ciclo</h3>
-            <div className="flex items-center justify-center">
-              <div className="relative w-16 h-16">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8"/>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-900 dark:text-gray-100">19h45min</span>
-                </div>
+        {/* Today's Tasks */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                Tarefas de Hoje
               </div>
+              <Button size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {todayTasks.map((task, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                  <button className="flex-shrink-0">
+                    {task.completed ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                        {task.task}
+                      </span>
+                      <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'default' : 'secondary'} className="text-xs">
+                        {task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {task.subject} • {task.time}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Sequência de Estudos */}
+      {/* Subjects Progress */}
       <Card>
-        <CardContent className="p-4">
-          <h3 className="text-xs font-medium text-gray-500 mb-4 uppercase">Sequência dos Estudos</h3>
-          <div className="space-y-2">
-            {planejamentoData.sequenciaEstudos.map((item, index) => (
-              <div key={index} className={`flex items-center justify-between p-3 border-l-4 ${item.cor} bg-gray-50 dark:bg-gray-800 rounded-r-lg`}>
-                <div className="flex items-center gap-3">
-                  <Circle className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{item.materia}</span>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-purple-500" />
+            Progresso das Matérias
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {subjects.map((subject, index) => (
+              <div key={index} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100">{subject.name}</h3>
+                  <Badge variant="outline" className="text-xs">{subject.nextReview}</Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Clock className="h-3 w-3" />
-                  {item.tempo}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Progresso</span>
+                    <span>{subject.progress}%</span>
+                  </div>
+                  <Progress value={subject.progress} className="h-2" />
+                  <div className="text-xs text-gray-500">
+                    Estudado hoje: {subject.studiedToday}h
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Weekly Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart2 className="h-5 w-5 text-cyan-500" />
+            Estatísticas da Semana
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-7 gap-4">
+            {weekStats.map((day, index) => (
+              <div key={index} className="text-center">
+                <div className="text-xs font-medium text-gray-500 mb-2">{day.day}</div>
+                <div className="relative h-24 bg-gray-100 dark:bg-gray-800 rounded">
+                  <div 
+                    className={`absolute bottom-0 w-full rounded ${day.hours >= day.goal ? 'bg-green-500' : 'bg-blue-500'}`}
+                    style={{ height: `${Math.min((day.hours / 6) * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="text-xs font-medium mt-2 text-gray-700 dark:text-gray-300">
+                  {day.hours}h
                 </div>
               </div>
             ))}
@@ -352,27 +420,92 @@ const StudentDashboard = () => {
     </div>
   );
 
-  const renderMainContent = () => {
-    switch (activeSection) {
-      case 'home':
-        return renderHomeContent();
-      case 'planos':
-        return renderPlanosContent();
-      case 'planejamento':
-        return renderPlanejamentoContent();
-      case 'tutor':
-        return <SuperTutorChat />;
-      default:
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return renderDashboard();
+      case 'subjects':
         return (
           <Card>
             <CardContent className="p-8 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                {sidebarItems.find(item => item.id === activeSection)?.label}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300">Esta seção está em desenvolvimento.</p>
+              <BookOpen className="h-12 w-12 mx-auto mb-4 text-purple-500" />
+              <h2 className="text-xl font-semibold mb-2">Matérias</h2>
+              <p className="text-gray-600 dark:text-gray-300">Gerencie suas matérias e conteúdos de estudo.</p>
             </CardContent>
           </Card>
         );
+      case 'study':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Timer className="h-12 w-12 mx-auto mb-4 text-green-500" />
+              <h2 className="text-xl font-semibold mb-2">Cronômetro de Estudos</h2>
+              <p className="text-gray-600 dark:text-gray-300">Use técnicas de Pomodoro para otimizar seus estudos.</p>
+            </CardContent>
+          </Card>
+        );
+      case 'calendar':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-orange-500" />
+              <h2 className="text-xl font-semibold mb-2">Cronograma</h2>
+              <p className="text-gray-600 dark:text-gray-300">Organize seu cronograma de estudos.</p>
+            </CardContent>
+          </Card>
+        );
+      case 'flashcards':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Zap className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+              <h2 className="text-xl font-semibold mb-2">Flashcards</h2>
+              <p className="text-gray-600 dark:text-gray-300">Revise com flashcards inteligentes.</p>
+            </CardContent>
+          </Card>
+        );
+      case 'practice':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Target className="h-12 w-12 mx-auto mb-4 text-red-500" />
+              <h2 className="text-xl font-semibold mb-2">Simulados</h2>
+              <p className="text-gray-600 dark:text-gray-300">Pratique com simulados e questões.</p>
+            </CardContent>
+          </Card>
+        );
+      case 'notes':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <PenTool className="h-12 w-12 mx-auto mb-4 text-indigo-500" />
+              <h2 className="text-xl font-semibold mb-2">Anotações</h2>
+              <p className="text-gray-600 dark:text-gray-300">Organize suas anotações de estudo.</p>
+            </CardContent>
+          </Card>
+        );
+      case 'stats':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-cyan-500" />
+              <h2 className="text-xl font-semibold mb-2">Estatísticas</h2>
+              <p className="text-gray-600 dark:text-gray-300">Analise seu desempenho nos estudos.</p>
+            </CardContent>
+          </Card>
+        );
+      case 'chat':
+        return (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-pink-500" />
+              <h2 className="text-xl font-semibold mb-2">IA Tutor</h2>
+              <p className="text-gray-600 dark:text-gray-300">Converse com sua IA tutora personalizada.</p>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return renderDashboard();
     }
   };
 
@@ -380,13 +513,12 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:flex">
       {renderSidebar()}
       
-      {/* Main Content */}
       <div className="flex-1 lg:ml-0">
-        {/* Top Header */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-30">
-          <div className="px-4 py-3">
+        {/* Header */}
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+          <div className="px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -395,18 +527,24 @@ const StudentDashboard = () => {
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
-                  {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-                </h1>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    Bem-vindo de volta, {user?.email?.split('@')[0]}!
+                  </p>
+                </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm">
-                  <Bell className="h-4 w-4" />
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></span>
                 </Button>
                 <ThemeToggle />
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm">
                     {user?.email?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -415,22 +553,11 @@ const StudentDashboard = () => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="p-4">
-          {renderMainContent()}
+        {/* Main Content */}
+        <main className="p-6">
+          {renderContent()}
         </main>
       </div>
-
-      {/* Floating Action Button for Tutor */}
-      {activeSection !== 'tutor' && (
-        <Button
-          onClick={() => setActiveSection('tutor')}
-          className="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-green-500 hover:bg-green-600 shadow-lg z-40"
-          size="sm"
-        >
-          <MessageSquare className="h-5 w-5" />
-        </Button>
-      )}
     </div>
   );
 };
