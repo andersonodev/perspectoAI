@@ -93,7 +93,7 @@ const StudentDashboard = () => {
         fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-green-500 to-green-600 
         text-white z-50 transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto
+        lg:relative lg:translate-x-0 lg:block lg:w-64
       `}>
         <div className="p-4">
           <div className="flex items-center justify-between mb-8">
@@ -377,11 +377,11 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:flex">
       {renderSidebar()}
       
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className="flex-1 lg:ml-0">
         {/* Top Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-30">
           <div className="px-4 py-3">
